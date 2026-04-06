@@ -4,7 +4,7 @@ type App struct {
 	conf *Config
 }
 
-func NewApp(conf *Config) *App {
+func New(conf *Config) *App {
 	return &App{
 		conf: conf,
 	}

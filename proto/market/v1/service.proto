@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package proto.market.v1;
+
+option go_package = "github.com/kasaderos/camel/gen/proto/market/v1;marketv1";
+
+import "google/protobuf/timestamp.proto";
+
+service MarketService {
+  rpc FetchBars(FetchBarsRequest) returns (FetchBarsResponse) {}
+}
+
+message FetchBarsRequest {
+  string symbol = 10;
+  string interval = 20;
+  google.protobuf.Timestamp start_date = 30;
+  google.protobuf.Timestamp end_date = 40;
+}
+
+message FetchBarsResponse {
+  repeated Bar bars = 10;
+}
+
+message Bar {
+  google.protobuf.Timestamp timestamp = 10;
+  double open = 20;
+  double high = 30;
+  double low = 40;
+  double close = 50;
+  int64 volume = 60;
+}

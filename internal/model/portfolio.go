@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type Portfolio struct {
 	ID   int64
 	Name string
@@ -8,4 +10,7 @@ type Portfolio struct {
 	Cache   float64
 
 	PolicyID string
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
