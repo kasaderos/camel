@@ -8,7 +8,7 @@ import (
 	"github.com/alpacahq/alpaca-trade-api-go/v3/marketdata"
 )
 
-func (s *MarketDataClient) FetchStockHistory(
+func (s *MarketDataClient) FetchBars(
 	ctx context.Context,
 	symbol string,
 	start time.Time,

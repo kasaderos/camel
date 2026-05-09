@@ -2,14 +2,11 @@ package model
 
 import "time"
 
-type Portfolio struct {
-	ID   int64
-	Name string
+type PortfolioAgent struct {
+	ID          string
+	PortfolioID string
 
-	Weights map[string]float64
-	Cache   float64
-
-	PolicyID string
+	AssetAgents []AssetAgent
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

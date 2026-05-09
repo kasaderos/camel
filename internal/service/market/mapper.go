@@ -2,7 +2,6 @@ package market
 
 import (
 	"github.com/alpacahq/alpaca-trade-api-go/v3/marketdata"
-
 	"github.com/kasaderos/camel/internal/model"
 )
 

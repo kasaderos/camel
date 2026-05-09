@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: camel
+      POSTGRES_USER: camel
+      POSTGRES_PASSWORD: camel
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  portfolio-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://camel:camel@postgres:5432/camel?sslmode=disable
+      APCA_API_KEY_ID: ${APCA_API_KEY_ID:-}
+      APCA_API_SECRET_KEY: ${APCA_API_SECRET_KEY:-}
+      ALPACA_MARKETDATA_URL: ${ALPACA_MARKETDATA_URL:-https://data.alpaca.markets}
+    entrypoint: ["/usr/local/bin/portfolio-manager"]
+    command: ["--help"]
+
+volumes:
+  pgdata: {}
