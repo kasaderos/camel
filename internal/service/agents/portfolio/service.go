@@ -47,7 +47,7 @@ func (s *PortfolioAgentService) CreatePortfolio(
 
 	// Persist asset agents with a portfolio_id link.
 	for _, assetAgent := range portfolioAgent.AssetAgents {
-		assetAgent.PortfolioID = new(portfolioAgent.PortfolioID)
+		assetAgent.PortfolioAgentID = new(portfolioAgent.ID)
 
 		if err := s.assetAgentService.CreateAgent(ctx, assetAgent); err != nil {
 			return model.PortfolioAgent{}, fmt.Errorf("create asset agent: %w", err)
@@ -84,12 +84,6 @@ func (s *PortfolioAgentService) Rebalance(
 		if err != nil {
 			return fmt.Errorf("update asset agent state: %w", err)
 		}
-	}
-
-	// refetch
-	agent, err = s.Fetch(ctx, agentID)
-	if err != nil {
-		return fmt.Errorf("fetch agent: %w", err)
 	}
 
 	return nil

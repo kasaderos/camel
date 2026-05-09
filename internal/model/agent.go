@@ -15,5 +15,5 @@ type AssetAgent struct {
 
 	State map[string]string
 
-	PortfolioID *string
+	PortfolioAgentID *string
 }

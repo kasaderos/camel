@@ -22,8 +22,8 @@ func (r *AgentRepository) CreateAgent(ctx context.Context, agent model.AssetAgen
 	dbAgent := fromModel(agent)
 
 	query := `
-		INSERT INTO asset_agents (id, asset_id, portfolio_id, asset_qty, cash, state)
-		VALUES (:id, :asset_id, :portfolio_id, :asset_qty, :cash, :state)
+		INSERT INTO asset_agents (id, asset_id, portfolio_agent_id, asset_qty, cash, state)
+		VALUES (:id, :asset_id, :portfolio_agent_id, :asset_qty, :cash, :state)
 	`
 
 	// NamedExecContext automatically maps struct fields to :name placeholders
@@ -38,7 +38,7 @@ func (r *AgentRepository) CreateAgent(ctx context.Context, agent model.AssetAgen
 func (r *AgentRepository) FetchInfo(ctx context.Context, agentID string) (model.AssetAgent, error) {
 	var agent AssetAgent
 
-	query := `SELECT id, asset_id, portfolio_id, asset_qty, cash, state FROM asset_agents WHERE id = $1`
+	query := `SELECT id, asset_id, portfolio_agent_id, asset_qty, cash, state FROM asset_agents WHERE id = $1`
 
 	err := r.db.GetContext(ctx, &agent, query, agentID)
 	if err != nil {

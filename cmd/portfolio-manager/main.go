@@ -50,6 +50,18 @@ func main() {
 				},
 				Action: rebalance,
 			},
+			{
+				Name:   "migrate-up",
+				Usage:  "Initialize database tables",
+				Flags:  []cli.Flag{},
+				Action: migrateUp,
+			},
+			{
+				Name:   "migrate-drop",
+				Usage:  "Remove everything in database",
+				Flags:  []cli.Flag{},
+				Action: migrateDrop,
+			},
 		},
 	}
 

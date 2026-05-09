@@ -27,7 +27,7 @@ func (r *AgentRepository) Fetch(ctx context.Context, id string) (model.Portfolio
 			a.state AS state
 		FROM portfolio_agents p
 		LEFT JOIN asset_agents a
-			ON a.portfolio_id = p.portfolio_id
+			ON a.portfolio_agent_id = p.id
 		WHERE p.id = $1
 		ORDER BY a.id
 	`

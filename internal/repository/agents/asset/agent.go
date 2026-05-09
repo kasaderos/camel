@@ -26,32 +26,32 @@ func (a *AgentState) Scan(value any) error {
 }
 
 type AssetAgent struct {
-	ID          string     `db:"id"`
-	AssetID     string     `db:"asset_id"`
-	PortfolioID *string    `db:"portfolio_id"`
-	AssetQty    float64    `db:"asset_qty"`
-	Cash        float64    `db:"cash"`
-	State       AgentState `db:"state"`
+	ID               string     `db:"id"`
+	AssetID          string     `db:"asset_id"`
+	PortfolioAgentID *string    `db:"portfolio_agent_id"`
+	AssetQty         float64    `db:"asset_qty"`
+	Cash             float64    `db:"cash"`
+	State            AgentState `db:"state"`
 }
 
 func (a AssetAgent) toModel() model.AssetAgent {
 	return model.AssetAgent{
-		ID:          a.ID,
-		AssetID:     a.AssetID,
-		PortfolioID: a.PortfolioID,
-		AssetQty:    a.AssetQty,
-		Cash:        a.Cash,
-		State:       map[string]string(a.State),
+		ID:               a.ID,
+		AssetID:          a.AssetID,
+		PortfolioAgentID: a.PortfolioAgentID,
+		AssetQty:         a.AssetQty,
+		Cash:             a.Cash,
+		State:            map[string]string(a.State),
 	}
 }
 
 func fromModel(a model.AssetAgent) AssetAgent {
 	return AssetAgent{
-		ID:          a.ID,
-		AssetID:     a.AssetID,
-		PortfolioID: a.PortfolioID,
-		AssetQty:    a.AssetQty,
-		Cash:        a.Cash,
-		State:       AgentState(a.State),
+		ID:               a.ID,
+		AssetID:          a.AssetID,
+		PortfolioAgentID: a.PortfolioAgentID,
+		AssetQty:         a.AssetQty,
+		Cash:             a.Cash,
+		State:            AgentState(a.State),
 	}
 }
