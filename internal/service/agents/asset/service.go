@@ -118,8 +118,10 @@ func (s *AssetAgentService) getState(
 		return nil, fmt.Errorf("failed to fetch market data: %w", err)
 	}
 
+	lastBar := bars[len(bars)-1]
+
 	return map[string]string{
-		model.StateDate:            now.Format(time.RFC3339),
+		model.StateDate:            lastBar.Timestamp.Format(time.DateOnly),
 		model.EMA20Lookback5Change: calcEMAChange(bars, window, lookback),
 	}, nil
 }
@@ -131,10 +133,12 @@ func calcEMAChange(bars []model.Bar, window, lookback int) string {
 
 	prices := extractClosePrices(bars)
 
+	fmt.Println(prices)
+
 	emaValues := ema(prices, window)
 	changeValue := priceChange(emaValues, lookback)
 
-	return fmt.Sprintf("%.3f", changeValue)
+	return fmt.Sprintf("%.5f", changeValue)
 }
 
 func extractClosePrices(bars []model.Bar) []float64 {
@@ -146,43 +150,61 @@ func extractClosePrices(bars []model.Bar) []float64 {
 	return prices
 }
 
-func ema(prices []float64, window int) []float64 {
-	if len(prices) == 0 || window <= 0 {
+func ema(prices []float64, n int) []float64 {
+	if len(prices) == 0 || n <= 0 {
 		return nil
 	}
 
 	result := make([]float64, len(prices))
-	multiplier := 2.0 / float64(window+1)
 
-	// Initialize the first EMA value as the first price
+	smoothing := 2.0
+	multiplier := smoothing / (1.0 + float64(n))
+
 	result[0] = prices[0]
 
 	for i := 1; i < len(prices); i++ {
-		// Formula: EMA = (Price - PrevEMA) * Multiplier + PrevEMA
-		// We round to 2 digits as requested previously
-		val := (prices[i]-result[i-1])*multiplier + result[i-1]
-		result[i] = math.Round(val*100) / 100
+		// EMA_today = (Price_today * Multiplier) + (EMA_yesterday * (1 - Multiplier))
+		todayPrice := prices[i]
+		yesterdayEMA := result[i-1]
+
+		emaValue := (todayPrice * multiplier) + (yesterdayEMA * (1.0 - multiplier))
+
+		result[i] = math.Round(emaValue*100) / 100
 	}
 
 	return result
 }
 
-func priceChange(prices []float64, lookback int) float64 {
-	n := len(prices)
+func priceChange(ema []float64, lookback int) float64 {
+	n := len(ema)
 
-	// Ensure we have enough data points and a valid lookback
 	if n <= lookback || lookback <= 0 {
 		return 0.0
 	}
 
-	currentPrice := prices[n-1]
-	oldPrice := prices[n-1-lookback]
+	idxStart := n - 1 - lookback
+	interval := ema[idxStart:]
 
-	if oldPrice == 0 {
+	if len(interval) > 2 {
+		for i := 1; i < len(interval)-1; i++ {
+			current := interval[i]
+			prev := interval[i-1]
+			next := interval[i+1]
+
+			if (current > prev && current > next) || (current < prev && current < next) {
+				return 0.0
+			}
+		}
+	}
+
+	startVal := interval[0]
+	endVal := interval[len(interval)-1]
+
+	if startVal == 0 {
 		return 0.0
 	}
 
-	change := currentPrice/oldPrice - 1
+	change := (endVal / startVal) - 1.0
 
 	return change
 }

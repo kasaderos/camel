@@ -20,7 +20,7 @@ func New(db *sqlx.DB) *Repository {
 
 type barRow struct {
 	AssetID   string    `db:"asset_id"`
-	Timestamp time.Time `db:"timestamp"`
+	Timestamp time.Time `db:"date"`
 	Open      float64   `db:"open"`
 	High      float64   `db:"high"`
 	Low       float64   `db:"low"`
@@ -38,12 +38,12 @@ func (r barRow) toModel() model.Bar {
 }
 
 type insertBarRow struct {
-	AssetID   string    `db:"asset_id"`
-	Timestamp time.Time `db:"timestamp"`
-	Open      float64   `db:"open"`
-	High      float64   `db:"high"`
-	Low       float64   `db:"low"`
-	Close     float64   `db:"close"`
+	AssetID string    `db:"asset_id"`
+	Date    time.Time `db:"date"`
+	Open    float64   `db:"open"`
+	High    float64   `db:"high"`
+	Low     float64   `db:"low"`
+	Close   float64   `db:"close"`
 }
 
 func (r *Repository) SaveBars(ctx context.Context, assetID string, bars []model.Bar) error {
@@ -60,19 +60,19 @@ func (r *Repository) SaveBars(ctx context.Context, assetID string, bars []model.
 		rows := make([]insertBarRow, 0, len(bars))
 		for _, b := range bars {
 			rows = append(rows, insertBarRow{
-				AssetID:   assetID,
-				Timestamp: b.Timestamp,
-				Open:      b.Open,
-				High:      b.High,
-				Low:       b.Low,
-				Close:     b.Close,
+				AssetID: assetID,
+				Date:    b.Timestamp,
+				Open:    b.Open,
+				High:    b.High,
+				Low:     b.Low,
+				Close:   b.Close,
 			})
 		}
 
-		// Assumes a UNIQUE constraint on (asset_id, timestamp) and uses upsert.
 		query := `
-			INSERT INTO asset_bars (asset_id, timestamp, open, high, low, close)
-			VALUES (:asset_id, :timestamp, :open, :high, :low, :close)`
+			INSERT INTO asset_bars (asset_id, date, open, high, low, close)
+			VALUES (:asset_id, :date, :open, :high, :low, :close)
+			ON CONFLICT DO NOTHING`
 
 		_, err := tx.NamedExecContext(ctx, query, rows)
 		if err != nil {
@@ -93,12 +93,12 @@ func (r *Repository) FetchBars(
 	}
 
 	query := `
-		SELECT asset_id, timestamp, open, high, low, close
+		SELECT asset_id, date, open, high, low, close
 		FROM asset_bars
 		WHERE asset_id = $1
-			AND timestamp >= $2
-			AND timestamp <= $3
-		ORDER BY timestamp
+			AND date >= $2
+			AND date <= $3
+		ORDER BY date 
 	`
 
 	var rows []barRow

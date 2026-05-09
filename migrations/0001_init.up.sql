@@ -25,10 +25,12 @@ CREATE TABLE asset_agents (
 
 CREATE TABLE asset_bars (
     asset_id    TEXT NOT NULL,
-    timestamp   TIMESTAMPTZ NOT NULL,
+    date        DATE NOT NULL,
 
     open        DOUBLE PRECISION NOT NULL,
     high        DOUBLE PRECISION NOT NULL,
     low         DOUBLE PRECISION NOT NULL,
-    close       DOUBLE PRECISION NOT NULL
+    close       DOUBLE PRECISION NOT NULL,
+
+    PRIMARY KEY (asset_id, date)
 );
