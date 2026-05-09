@@ -72,13 +72,7 @@ func (r *Repository) SaveBars(ctx context.Context, assetID string, bars []model.
 		// Assumes a UNIQUE constraint on (asset_id, timestamp) and uses upsert.
 		query := `
 			INSERT INTO asset_bars (asset_id, timestamp, open, high, low, close)
-			VALUES (:asset_id, :timestamp, :open, :high, :low, :close)
-			ON CONFLICT (asset_id, timestamp) DO UPDATE SET
-				open = EXCLUDED.open,
-				high = EXCLUDED.high,
-				low = EXCLUDED.low,
-				close = EXCLUDED.close
-		`
+			VALUES (:asset_id, :timestamp, :open, :high, :low, :close)`
 
 		_, err := tx.NamedExecContext(ctx, query, rows)
 		if err != nil {

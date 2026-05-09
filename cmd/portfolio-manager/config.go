@@ -41,9 +41,9 @@ func (p Postgres) DSN() (string, error) {
 }
 
 type Alpaca struct {
-	APIKey    string `env:"ALPACA_API_KEY,APCA_API_KEY_ID" env-description:"Alpaca API key"`
-	Secret    string `env:"ALPACA_API_SECRET,APCA_API_SECRET_KEY" env-description:"Alpaca API secret"`
-	MarketURL string `env:"ALPACA_MARKETDATA_URL" env-default:"https://data.alpaca.markets"`
+	APIKey    string `env:"APCA_API_KEY_ID" env-description:"Alpaca API key"`
+	Secret    string `env:"APCA_API_SECRET_KEY" env-description:"Alpaca API secret"`
+	MarketURL string `env:"ALPACA_MARKETDATA_URL" env-default:""`
 }
 
 func loadConfig() (*config, error) {

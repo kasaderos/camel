@@ -111,17 +111,11 @@ func (s *AssetAgentService) getState(
 	bars, err := s.market.FetchBars(
 		ctx,
 		agent.AssetID,
-		now.Add(-24*time.Hour*window),
+		now.Add(-24*time.Hour*2*window),
 		now,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch market data: %w", err)
-	}
-
-	// Ensure we have data for today
-	lastBar := bars[len(bars)-1]
-	if lastBar.Timestamp.Format(time.DateOnly) != now.Format(time.DateOnly) {
-		return nil, fmt.Errorf("no market data for today: %s %s", lastBar.Timestamp, now)
 	}
 
 	return map[string]string{
@@ -131,8 +125,8 @@ func (s *AssetAgentService) getState(
 }
 
 func calcEMAChange(bars []model.Bar, window, lookback int) string {
-	if len(bars) < window+lookback {
-		return "0.0"
+	if len(bars) < window {
+		return "undefined"
 	}
 
 	prices := extractClosePrices(bars)

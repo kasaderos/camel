@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/alpacahq/alpaca-trade-api-go/v3/marketdata"
 	"github.com/kasaderos/camel/internal/model"
+	"github.com/kasaderos/camel/pkg/alpaca"
 )
 
 type MarketProvider interface {
@@ -13,10 +13,10 @@ type MarketProvider interface {
 		ctx context.Context,
 		symbol string,
 		start, end time.Time,
-	) ([]marketdata.Bar, error)
+	) ([]alpaca.Bar, error)
 }
 
-type BarRepository interface {
+type Repository interface {
 	SaveBars(ctx context.Context, assetID string, bars []model.Bar) error
 	FetchBars(ctx context.Context, assetID string, start, end time.Time) ([]model.Bar, error)
 }

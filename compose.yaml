@@ -24,8 +24,8 @@ services:
       POSTGRES_DATABASE: ${POSTGRES_DATABASE:-camel}
       POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-disable}
 
-      APCA_API_KEY_ID: ${ALPACA_API_KEY_ID:-}
-      APCA_API_SECRET_KEY: ${ALPACA_API_SECRET_KEY:-}
+      APCA_API_KEY_ID: ${APCA_API_KEY_ID}
+      APCA_API_SECRET_KEY: ${APCA_API_SECRET_KEY}
       ALPACA_MARKETDATA_URL: ${ALPACA_MARKETDATA_URL:-https://data.alpaca.markets}
     entrypoint: ["/usr/local/bin/portfolio-manager"]
     command: ["--help"]

@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/alpacahq/alpaca-trade-api-go/v3/marketdata"
 	"github.com/kasaderos/camel/internal/model"
+	"github.com/kasaderos/camel/pkg/alpaca"
 	"github.com/samber/lo"
 )
 
 type Service struct {
 	market MarketProvider
-	repo   BarRepository
+	repo   Repository
 }
 
-func New(market MarketProvider, repo BarRepository) *Service {
+func New(market MarketProvider, repo Repository) *Service {
 	return &Service{
 		market: market,
 		repo:   repo,
@@ -88,7 +88,7 @@ func (s *Service) fetchFromProvider(
 		return nil, fmt.Errorf("fetch bars: %w", err)
 	}
 
-	return lo.Map(bars, func(b marketdata.Bar, _ int) model.Bar {
+	return lo.Map(bars, func(b alpaca.Bar, _ int) model.Bar {
 		return mapAlpacaBarToBar(b)
 	}), nil
 }
