@@ -121,9 +121,9 @@ func (a *Agent) getState(ctx context.Context) (model.State, error) {
 	return st, nil
 }
 
-func calcEMAChange(bars []model.Bar, window, lookback int) decimal.Decimal {
+func calcEMAChange(bars []model.Bar, window, lookback int) float64 {
 	if len(bars) < window {
-		return decimal.NewFromFloat(0.0)
+		return 0.0
 	}
 
 	prices := extractClosePrices(bars)
@@ -131,7 +131,7 @@ func calcEMAChange(bars []model.Bar, window, lookback int) decimal.Decimal {
 	emaValues := ema(prices, window)
 	changeValue := priceChange(emaValues, lookback)
 
-	return decimal.NewFromFloat(changeValue)
+	return decimal.NewFromFloat(changeValue).Round(3).InexactFloat64()
 }
 
 func extractClosePrices(bars []model.Bar) []float64 {

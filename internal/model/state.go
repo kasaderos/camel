@@ -2,8 +2,10 @@ package model
 
 import (
 	"time"
+)
 
-	"github.com/shopspring/decimal"
+const (
+	emaChange = "ema_change"
 )
 
 type State struct {
@@ -18,24 +20,32 @@ func (s *State) Data() map[string]any {
 	return s.data
 }
 
-func (s *State) SetDate(t time.Time) {
-	s.data["date"] = t
+func (s *State) init() {
+	if s.data == nil {
+		s.data = make(map[string]any)
+	}
 }
 
-func (s *State) SetEmaChange(d decimal.Decimal) {
-	s.data["ema_change"] = d
+func (s *State) SetDate(t time.Time) {
+	s.init()
+	s.data["date"] = t.Format(time.DateOnly)
+}
+
+func (s *State) SetEmaChange(f float64) {
+	s.init()
+	s.data[emaChange] = f
 }
 
 func (s *State) EmaChange() (float64, bool) {
-	value, ok := s.data["ema_change"]
+	value, ok := s.data[emaChange]
 	if !ok {
 		return 0.0, false
 	}
 
-	d, ok := value.(decimal.Decimal)
+	f, ok := value.(float64)
 	if !ok {
 		return 0.0, false
 	}
 
-	return d.Float64()
+	return f, true
 }

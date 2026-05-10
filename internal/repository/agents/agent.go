@@ -1,10 +1,42 @@
 package agents
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/kasaderos/camel/internal/model"
 )
+
+type jsonMap map[string]any
+
+func (j *jsonMap) Scan(src any) error {
+	var b []byte
+	switch v := src.(type) {
+	case []byte:
+		b = v
+	case string:
+		b = []byte(v)
+	case nil:
+		*j = nil
+		return nil
+	default:
+		return fmt.Errorf("jsonMap: cannot scan type %T", src)
+	}
+	return json.Unmarshal(b, (*map[string]any)(j))
+}
+
+func (j jsonMap) Value() (driver.Value, error) {
+	if j == nil {
+		return "{}", nil
+	}
+	b, err := json.Marshal(map[string]any(j))
+	if err != nil {
+		return nil, err
+	}
+	return string(b), nil
+}
 
 func fromAssetAgent(a model.AssetAgent) AssetAgent {
 	return AssetAgent{
@@ -13,7 +45,7 @@ func fromAssetAgent(a model.AssetAgent) AssetAgent {
 		PortfolioAgentID: a.PortfolioAgentID,
 		AssetQty:         a.AssetQty,
 		Cash:             a.Cash,
-		State:            a.State.Data(),
+		State:            jsonMap(a.State.Data()),
 	}
 }
 
@@ -45,12 +77,12 @@ func fromPortfolioAgent(a model.PortfolioAgent) PortfolioAgent {
 }
 
 type AssetAgent struct {
-	ID               string         `db:"id"`
-	AssetID          string         `db:"asset_id"`
-	PortfolioAgentID *string        `db:"portfolio_agent_id"`
-	AssetQty         float64        `db:"asset_qty"`
-	Cash             float64        `db:"cash"`
-	State            map[string]any `db:"state"`
+	ID               string  `db:"id"`
+	AssetID          string  `db:"asset_id"`
+	PortfolioAgentID *string `db:"portfolio_agent_id"`
+	AssetQty         float64 `db:"asset_qty"`
+	Cash             float64 `db:"cash"`
+	State            jsonMap `db:"state"`
 }
 
 func (a AssetAgent) toModel() *model.AssetAgent {

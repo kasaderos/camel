@@ -82,7 +82,7 @@ func (r *AgentRepository) Deposit(ctx context.Context, agentID string, q float64
 func (r *AgentRepository) UpdateState(ctx context.Context, agentID string, state model.State) error {
 	query := `UPDATE asset_agents SET state = $1 WHERE id = $2`
 
-	res, err := r.db.ExecContext(ctx, query, state.Data(), agentID)
+	res, err := r.db.ExecContext(ctx, query, jsonMap(state.Data()), agentID)
 	if err != nil {
 		return fmt.Errorf("failed to update agent state: %w", err)
 	}

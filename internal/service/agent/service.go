@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/samber/lo"
+
 	"github.com/kasaderos/camel/internal/agents/asset"
 	"github.com/kasaderos/camel/internal/agents/portfolio"
 	"github.com/kasaderos/camel/internal/model"
-	"github.com/samber/lo"
 )
 
 // Service tracks live asset agents and drives their monitoring lifecycle.
