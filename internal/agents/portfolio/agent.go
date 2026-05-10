@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/kasaderos/camel/internal/model"
-	"github.com/samber/lo"
 )
 
 type Agent struct {
@@ -17,72 +16,17 @@ type Agent struct {
 
 	assetAgents []AssetAgent
 	repository  AgentRepository
-
-	assetAgentManager AssetAgentManager
 }
 
-func NewAgent(
-	repo AgentRepository,
-	assetAgentManager AssetAgentManager,
-) *Agent {
+func NewAgent(agent model.PortfolioAgent, repo AgentRepository, assetAgents []AssetAgent) *Agent {
 	return &Agent{
-		repository:        repo,
-		assetAgentManager: assetAgentManager,
+		PortfolioAgent: agent,
+		repository:     repo,
+		assetAgents:    assetAgents,
 	}
 }
 
-func (a *Agent) Initialize(ctx context.Context, agentID string) error {
-	portfolioAgent, err := a.repository.Fetch(ctx, agentID)
-	if err != nil {
-		return fmt.Errorf("fetch agent: %w", err)
-	}
-
-	a.PortfolioAgent = portfolioAgent
-
-	return a.initializeAgents(ctx)
-}
-
-func (a *Agent) initializeAgents(ctx context.Context) error {
-	assetAgents, err := lo.MapErr(a.AssetAgentIDs, func(agentID string, i int) (AssetAgent, error) {
-		return a.assetAgentManager.FetchAssetAgent(ctx, agentID)
-	})
-	if err != nil {
-		return fmt.Errorf("asset agents init: %w", err)
-	}
-
-	a.assetAgents = assetAgents
-
-	return nil
-}
-
-func (a *Agent) CreatePortfolio(
-	ctx context.Context,
-	assets []model.Asset,
-) error {
-	assetAgents := lo.Map(assets, func(asset model.Asset, i int) model.AssetAgent {
-		return model.AssetAgent{
-			ID:      fmt.Sprintf("asset-agent-%d", i+1),
-			AssetID: asset.ID,
-		}
-	})
-
-	agent, err := a.repository.Create(ctx, assetAgents)
-	if err != nil {
-		return err
-	}
-
-	err = a.Initialize(ctx, agent.ID)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (a *Agent) Rebalance(
-	ctx context.Context,
-	agentID string,
-) error {
+func (a *Agent) Rebalance(ctx context.Context) error {
 	const threshold = 0.02
 
 	// update state of all asset agents in portfolio

@@ -8,10 +8,9 @@ import (
 
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
-	"github.com/kasaderos/camel/internal/agents/asset"
-	"github.com/kasaderos/camel/internal/agents/portfolio"
 	agents "github.com/kasaderos/camel/internal/repository/agents"
 	marketrepo "github.com/kasaderos/camel/internal/repository/market"
+	"github.com/kasaderos/camel/internal/service/agent"
 	marketservice "github.com/kasaderos/camel/internal/service/market"
 	"github.com/kasaderos/camel/pkg/alpaca"
 	"github.com/samber/do/v2"
@@ -92,7 +91,7 @@ func provide() (do.Injector, error) {
 		return marketservice.New(client, repo), nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*asset.AgentManager, error) {
+	do.Provide(injector, func(i do.Injector) (*agent.Service, error) {
 		repo, err := do.Invoke[*agents.AgentRepository](i)
 		if err != nil {
 			return nil, err
@@ -101,19 +100,7 @@ func provide() (do.Injector, error) {
 		if err != nil {
 			return nil, err
 		}
-		return asset.NewAgentManager(repo, market), nil
-	})
-
-	do.Provide(injector, func(i do.Injector) (*portfolio.Agent, error) {
-		repo, err := do.Invoke[*agents.AgentRepository](i)
-		if err != nil {
-			return nil, err
-		}
-		manager, err := do.Invoke[*asset.AgentManager](i)
-		if err != nil {
-			return nil, err
-		}
-		return portfolio.NewAgent(repo, manager), nil
+		return agent.New(repo, repo, market), nil
 	})
 
 	return injector, nil

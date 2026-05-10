@@ -17,30 +17,12 @@ type Agent struct {
 	market MarketService
 }
 
-func NewAgent(repo AgentRepository, market MarketService, opts ...Option) (*Agent, error) {
-	a := &Agent{
-		repo:   repo,
-		market: market,
+func NewAgent(agent model.AssetAgent, repo AgentRepository, market MarketService) *Agent {
+	return &Agent{
+		AssetAgent: agent,
+		repo:       repo,
+		market:     market,
 	}
-
-	for _, opt := range opts {
-		if err := opt(a); err != nil {
-			return nil, err
-		}
-	}
-
-	return a, nil
-}
-
-func (a *Agent) Initalize(ctx context.Context, id string) error {
-	agent, err := a.repo.FetchInfo(ctx, id)
-	if err != nil {
-		return fmt.Errorf("fetch agent: %w", err)
-	}
-
-	a.AssetAgent = agent
-
-	return nil
 }
 
 func (a *Agent) CreateAgent(

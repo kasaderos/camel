@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kasaderos/camel/internal/agents/portfolio"
 	"github.com/kasaderos/camel/internal/model"
+	agentservice "github.com/kasaderos/camel/internal/service/agent"
 	"github.com/samber/do/v2"
 	"github.com/urfave/cli/v3"
 )
@@ -22,14 +22,14 @@ func createPortfolio(ctx context.Context, c *cli.Command) error {
 	}
 	defer terminate(injector)
 
-	agent := do.MustInvoke[*portfolio.Agent](injector)
+	service := do.MustInvoke[*agentservice.Service](injector)
 
 	assets, err := readAssetsCSV(c.String("csv"))
 	if err != nil {
 		return err
 	}
 
-	err = agent.CreatePortfolio(ctx, assets)
+	agent, err := service.CreatePortfolioAgent(ctx, assets)
 	if err != nil {
 		return err
 	}
@@ -46,9 +46,9 @@ func portfolioInfo(ctx context.Context, c *cli.Command) error {
 	}
 	defer terminate(injector)
 
-	agent := do.MustInvoke[*portfolio.Agent](injector)
+	mgr := do.MustInvoke[*agentservice.Service](injector)
 
-	err = agent.Initialize(ctx, c.String("id"))
+	agent, err := mgr.InitPortfolioAgent(ctx, c.String("id"))
 	if err != nil {
 		return err
 	}
@@ -65,14 +65,14 @@ func rebalance(ctx context.Context, c *cli.Command) error {
 	}
 	defer terminate(injector)
 
-	agent := do.MustInvoke[*portfolio.Agent](injector)
+	mgr := do.MustInvoke[*agentservice.Service](injector)
 
-	if err := agent.Rebalance(ctx, c.String("id")); err != nil {
+	agent, err := mgr.InitPortfolioAgent(ctx, c.String("id"))
+	if err != nil {
 		return err
 	}
 
-	err = agent.Rebalance(ctx, c.String("id"))
-	if err != nil {
+	if err := agent.Rebalance(ctx); err != nil {
 		return err
 	}
 
