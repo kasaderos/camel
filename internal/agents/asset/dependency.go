@@ -23,3 +23,9 @@ type MarketService interface {
 		end time.Time,
 	) ([]model.Bar, error)
 }
+
+type AssetAgent interface {
+	FetchInfo(context.Context) model.AssetAgent
+	FetchState(context.Context) model.State
+	UpdateState(context.Context) error
+}

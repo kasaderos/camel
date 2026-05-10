@@ -3,6 +3,7 @@ package portfolio
 import (
 	"context"
 
+	"github.com/kasaderos/camel/internal/agents/asset"
 	"github.com/kasaderos/camel/internal/model"
 )
 
@@ -17,4 +18,7 @@ type AssetAgent interface {
 	UpdateState(context.Context) error
 }
 
-type AssetAgentInitFunc func(ctx context.Context, id string) (AssetAgent, error)
+// TODO: somehow use AssetAgent in manager
+type AssetAgentManager interface {
+	FetchAssetAgent(ctx context.Context, id string) (*asset.Agent, error)
+}

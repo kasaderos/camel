@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -93,7 +92,7 @@ func provide() (do.Injector, error) {
 		return marketservice.New(client, repo), nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*portfolio.Agent, error) {
+	do.Provide(injector, func(i do.Injector) (*asset.AgentManager, error) {
 		repo, err := do.Invoke[*agents.AgentRepository](i)
 		if err != nil {
 			return nil, err
@@ -102,12 +101,19 @@ func provide() (do.Injector, error) {
 		if err != nil {
 			return nil, err
 		}
+		return asset.NewAgentManager(repo, market), nil
+	})
 
-		assetAgentsInitFunc := func(ctx context.Context, id string) (portfolio.AssetAgent, error) {
-			return asset.NewAgent(repo, market, asset.WithInitialize(ctx, id))
+	do.Provide(injector, func(i do.Injector) (*portfolio.Agent, error) {
+		repo, err := do.Invoke[*agents.AgentRepository](i)
+		if err != nil {
+			return nil, err
 		}
-
-		return portfolio.NewAgent(repo, assetAgentsInitFunc), nil
+		manager, err := do.Invoke[*asset.AgentManager](i)
+		if err != nil {
+			return nil, err
+		}
+		return portfolio.NewAgent(repo, manager), nil
 	})
 
 	return injector, nil

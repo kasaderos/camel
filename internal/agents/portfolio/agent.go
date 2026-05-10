@@ -18,16 +18,16 @@ type Agent struct {
 	assetAgents []AssetAgent
 	repository  AgentRepository
 
-	assetAgentInit AssetAgentInitFunc
+	assetAgentManager AssetAgentManager
 }
 
 func NewAgent(
 	repo AgentRepository,
-	assetAgentInit AssetAgentInitFunc,
+	assetAgentManager AssetAgentManager,
 ) *Agent {
 	return &Agent{
-		repository:     repo,
-		assetAgentInit: assetAgentInit,
+		repository:        repo,
+		assetAgentManager: assetAgentManager,
 	}
 }
 
@@ -44,7 +44,7 @@ func (a *Agent) Initialize(ctx context.Context, agentID string) error {
 
 func (a *Agent) initializeAgents(ctx context.Context) error {
 	assetAgents, err := lo.MapErr(a.AssetAgentIDs, func(agentID string, i int) (AssetAgent, error) {
-		return a.assetAgentInit(ctx, agentID)
+		return a.assetAgentManager.FetchAssetAgent(ctx, agentID)
 	})
 	if err != nil {
 		return fmt.Errorf("asset agents init: %w", err)
