@@ -54,13 +54,13 @@ func (r *AgentRepository) Fetch(ctx context.Context, id string) (model.Portfolio
 		UpdatedAt:   row.UpdatedAt,
 	}
 
-	assetAgents := make([]model.AssetAgent, 0, len(rows))
+	assetAgents := make([]*model.AssetAgent, 0, len(rows))
 	for _, row := range rows {
 		if !row.AssetAgentID.Valid {
 			continue
 		}
 
-		assetAgents = append(assetAgents, model.AssetAgent{
+		assetAgents = append(assetAgents, &model.AssetAgent{
 			ID:       row.AssetAgentID.String,
 			AssetID:  row.AssetID.String,
 			AssetQty: row.AssetQty.Float64,

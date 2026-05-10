@@ -26,9 +26,9 @@ func (s *PortfolioAgentService) CreatePortfolio(
 	ctx context.Context,
 	assets []model.Asset,
 ) (model.PortfolioAgent, error) {
-	assetAgents := make([]model.AssetAgent, len(assets))
+	assetAgents := make([]*model.AssetAgent, len(assets))
 	for i, asset := range assets {
-		assetAgents[i] = model.AssetAgent{
+		assetAgents[i] = &model.AssetAgent{
 			ID:      fmt.Sprintf("asset-agent-%d", i+1),
 			AssetID: asset.ID,
 		}
@@ -49,7 +49,7 @@ func (s *PortfolioAgentService) CreatePortfolio(
 	for _, assetAgent := range portfolioAgent.AssetAgents {
 		assetAgent.PortfolioAgentID = new(portfolioAgent.ID)
 
-		if err := s.assetAgentService.CreateAgent(ctx, assetAgent); err != nil {
+		if err := s.assetAgentService.CreateAgent(ctx, *assetAgent); err != nil {
 			return model.PortfolioAgent{}, fmt.Errorf("create asset agent: %w", err)
 		}
 	}
@@ -73,18 +73,31 @@ func (s *PortfolioAgentService) Rebalance(
 	ctx context.Context,
 	agentID string,
 ) error {
-	agent, err := s.Fetch(ctx, agentID)
+	const threshold = 0.02
+	agent, err := s.agentRepo.Fetch(ctx, agentID)
 	if err != nil {
 		return fmt.Errorf("fetch agent: %w", err)
 	}
 
 	// update state of all asset agents in portfolio
 	for _, assetAgent := range agent.AssetAgents {
-		err = s.assetAgentService.UpdateState(ctx, assetAgent.ID)
+		state, err := s.assetAgentService.UpdateState(ctx, assetAgent.ID)
 		if err != nil {
 			return fmt.Errorf("update asset agent state: %w", err)
 		}
+
+		assetAgent.State = state
 	}
 
 	return nil
 }
+
+/*
+	PortfolioAgent commands:
+	- by current state sell stocks
+		- if weight is down -> sell
+		- if weight is up -> do nothing
+	- by current state buy stocks
+	    - if weight is down -> do nothing
+		- if weight is up ->
+*/

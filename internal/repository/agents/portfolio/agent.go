@@ -13,7 +13,7 @@ type PortfolioAgent struct {
 	UpdatedAt   time.Time `db:"updated_at"`
 }
 
-func (a PortfolioAgent) toModel(assetAgents []model.AssetAgent) model.PortfolioAgent {
+func (a PortfolioAgent) toModel(assetAgents []*model.AssetAgent) model.PortfolioAgent {
 	return model.PortfolioAgent{
 		ID:          a.ID,
 		PortfolioID: a.PortfolioID,

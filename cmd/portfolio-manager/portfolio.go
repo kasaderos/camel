@@ -117,10 +117,20 @@ func printPortfolio(w io.Writer, agent model.PortfolioAgent) {
 	sort.Strings(keys)
 
 	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "summary by asset:")
-	for _, k := range keys {
-		s := byAsset[k]
-		fmt.Fprintf(w, "- asset_id=%s agents=%d total_qty=%.4f total_cash=%.2f\n", s.AssetID, s.Count, s.Qty, s.Cash)
+
+	weights := agent.Portfolio(0)
+	if len(weights) > 0 {
+		wKeys := make([]string, 0, len(weights))
+		for k := range weights {
+			wKeys = append(wKeys, k)
+		}
+		sort.Strings(wKeys)
+
+		fmt.Fprintln(w, "")
+		fmt.Fprintln(w, "portfolio weights:")
+		for _, k := range wKeys {
+			fmt.Fprintf(w, "- asset_id=%s weight=%.4f\n", k, weights[k])
+		}
 	}
 }
 

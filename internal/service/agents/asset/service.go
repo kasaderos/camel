@@ -78,22 +78,27 @@ func (s *AssetAgentService) Deposit(
 func (s *AssetAgentService) UpdateState(
 	ctx context.Context,
 	agentID string,
-) error {
+) (map[string]string, error) {
 	if agentID == "" {
-		return errors.New("agent ID is required")
+		return nil, errors.New("agent ID is required")
 	}
 
 	agent, err := s.FetchInfo(ctx, agentID)
 	if err != nil {
-		return fmt.Errorf("failed to fetch agent: %w", err)
+		return nil, fmt.Errorf("failed to fetch agent: %w", err)
 	}
 
 	state, err := s.getState(ctx, agent)
 	if err != nil {
-		return fmt.Errorf("failed to compute state: %w", err)
+		return nil, fmt.Errorf("failed to compute state: %w", err)
 	}
 
-	return s.repo.UpdateState(ctx, agentID, state)
+	err = s.repo.UpdateState(ctx, agentID, state)
+	if err != nil {
+		return nil, fmt.Errorf("update state: %w", err)
+	}
+
+	return state, nil
 }
 
 func (s *AssetAgentService) getState(
@@ -111,7 +116,7 @@ func (s *AssetAgentService) getState(
 	bars, err := s.market.FetchBars(
 		ctx,
 		agent.AssetID,
-		now.Add(-24*time.Hour*2*window),
+		now.Add(-24*time.Hour*3*window),
 		now,
 	)
 	if err != nil {
@@ -132,8 +137,6 @@ func calcEMAChange(bars []model.Bar, window, lookback int) string {
 	}
 
 	prices := extractClosePrices(bars)
-
-	fmt.Println(prices)
 
 	emaValues := ema(prices, window)
 	changeValue := priceChange(emaValues, lookback)

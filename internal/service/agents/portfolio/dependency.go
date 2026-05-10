@@ -37,5 +37,5 @@ type AssetAgentService interface {
 	UpdateState(
 		ctx context.Context,
 		agentID string,
-	) error
+	) (map[string]string, error)
 }
