@@ -1,4 +1,4 @@
-package asset
+package agents
 
 import (
 	"context"
@@ -10,23 +10,14 @@ import (
 	"github.com/kasaderos/camel/internal/model"
 )
 
-type AgentRepository struct {
-	db *sqlx.DB
-}
-
-func New(db *sqlx.DB) *AgentRepository {
-	return &AgentRepository{db: db}
-}
-
-func (r *AgentRepository) CreateAgent(ctx context.Context, agent model.AssetAgent) error {
-	dbAgent := fromModel(agent)
+func (r *AgentRepository) CreateAgent(ctx context.Context, agent *model.AssetAgent) error {
+	dbAgent := fromAssetAgent(*agent)
 
 	query := `
 		INSERT INTO asset_agents (id, asset_id, portfolio_agent_id, asset_qty, cash, state)
 		VALUES (:id, :asset_id, :portfolio_agent_id, :asset_qty, :cash, :state)
 	`
 
-	// NamedExecContext automatically maps struct fields to :name placeholders
 	_, err := r.db.NamedExecContext(ctx, query, dbAgent)
 	if err != nil {
 		return fmt.Errorf("could not create agent: %w", err)
@@ -49,7 +40,7 @@ func (r *AgentRepository) FetchInfo(ctx context.Context, agentID string) (model.
 		return model.AssetAgent{}, err
 	}
 
-	return agent.toModel(), nil
+	return *agent.toModel(), nil
 }
 
 func (r *AgentRepository) Withdraw(ctx context.Context, agentID string, q float64) error {
@@ -88,10 +79,10 @@ func (r *AgentRepository) Deposit(ctx context.Context, agentID string, q float64
 	})
 }
 
-func (r *AgentRepository) UpdateState(ctx context.Context, agentID string, state map[string]string) error {
+func (r *AgentRepository) UpdateState(ctx context.Context, agentID string, state model.State) error {
 	query := `UPDATE asset_agents SET state = $1 WHERE id = $2`
 
-	res, err := r.db.ExecContext(ctx, query, state, agentID)
+	res, err := r.db.ExecContext(ctx, query, state.Data(), agentID)
 	if err != nil {
 		return fmt.Errorf("failed to update agent state: %w", err)
 	}
@@ -108,7 +99,6 @@ func (r *AgentRepository) UpdateState(ctx context.Context, agentID string, state
 	return nil
 }
 
-// withTransaction is a helper to ensure tx.Rollback() or tx.Commit() is always called
 func (r *AgentRepository) withTransaction(ctx context.Context, fn func(*sqlx.Tx) error) error {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {

@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 // State values
 const (
 	StateDate            = "date"
@@ -13,7 +15,17 @@ type AssetAgent struct {
 	AssetQty float64
 	Cash     float64
 
-	State map[string]string
+	State State
 
 	PortfolioAgentID *string
+}
+
+type PortfolioAgent struct {
+	ID          string
+	PortfolioID string
+
+	AssetAgentIDs []string
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

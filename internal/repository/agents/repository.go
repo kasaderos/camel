@@ -1,4 +1,4 @@
-package portfolio
+package agents
 
 import (
 	"github.com/jmoiron/sqlx"

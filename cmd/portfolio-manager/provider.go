@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -8,15 +9,13 @@ import (
 
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
-	"github.com/samber/do/v2"
-
-	assetrepo "github.com/kasaderos/camel/internal/repository/agents/asset"
-	portfoliorepo "github.com/kasaderos/camel/internal/repository/agents/portfolio"
+	"github.com/kasaderos/camel/internal/agents/asset"
+	"github.com/kasaderos/camel/internal/agents/portfolio"
+	agents "github.com/kasaderos/camel/internal/repository/agents"
 	marketrepo "github.com/kasaderos/camel/internal/repository/market"
-	assetservice "github.com/kasaderos/camel/internal/service/agents/asset"
-	portfolioservice "github.com/kasaderos/camel/internal/service/agents/portfolio"
 	marketservice "github.com/kasaderos/camel/internal/service/market"
 	"github.com/kasaderos/camel/pkg/alpaca"
+	"github.com/samber/do/v2"
 )
 
 func provide() (do.Injector, error) {
@@ -58,21 +57,12 @@ func provide() (do.Injector, error) {
 		return db, nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (marketservice.MarketProvider, error) {
-		cfg, err := do.Invoke[*config](i)
+	do.Provide(injector, func(i do.Injector) (*agents.AgentRepository, error) {
+		db, err := do.Invoke[*sqlx.DB](i)
 		if err != nil {
 			return nil, err
 		}
-		if strings.TrimSpace(cfg.Alpaca.APIKey) == "" || strings.TrimSpace(cfg.Alpaca.Secret) == "" {
-			return nil, errors.New("alpaca-key and alpaca-secret are required (or set APCA_API_KEY_ID/APCA_API_SECRET_KEY)")
-		}
-
-		client, err := alpaca.NewMarketDataClient(cfg.Alpaca.APIKey, cfg.Alpaca.Secret, cfg.Alpaca.MarketURL)
-		if err != nil {
-			return nil, fmt.Errorf("create alpaca market client: %w", err)
-		}
-
-		return client, nil
+		return agents.New(db), nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*marketrepo.Repository, error) {
@@ -83,8 +73,16 @@ func provide() (do.Injector, error) {
 		return marketrepo.New(db), nil
 	})
 
+	do.Provide(injector, func(i do.Injector) (*alpaca.MarketDataClient, error) {
+		cfg, err := do.Invoke[*config](i)
+		if err != nil {
+			return nil, err
+		}
+		return alpaca.NewMarketDataClient(cfg.Alpaca.APIKey, cfg.Alpaca.Secret, cfg.Alpaca.MarketURL)
+	})
+
 	do.Provide(injector, func(i do.Injector) (*marketservice.Service, error) {
-		provider, err := do.Invoke[marketservice.MarketProvider](i)
+		client, err := do.Invoke[*alpaca.MarketDataClient](i)
 		if err != nil {
 			return nil, err
 		}
@@ -92,44 +90,24 @@ func provide() (do.Injector, error) {
 		if err != nil {
 			return nil, err
 		}
-		return marketservice.New(provider, repo), nil
+		return marketservice.New(client, repo), nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*assetrepo.AgentRepository, error) {
-		db := do.MustInvoke[*sqlx.DB](i)
-		return assetrepo.New(db), nil
-	})
+	do.Provide(injector, func(i do.Injector) (*portfolio.Agent, error) {
+		repo, err := do.Invoke[*agents.AgentRepository](i)
+		if err != nil {
+			return nil, err
+		}
+		market, err := do.Invoke[*marketservice.Service](i)
+		if err != nil {
+			return nil, err
+		}
 
-	do.Provide(injector, func(i do.Injector) (*assetservice.AssetAgentService, error) {
-		repo, err := do.Invoke[*assetrepo.AgentRepository](i)
-		if err != nil {
-			return nil, err
+		assetAgentsInitFunc := func(ctx context.Context, id string) (portfolio.AssetAgent, error) {
+			return asset.NewAgent(repo, market, asset.WithInitialize(ctx, id))
 		}
-		mkt, err := do.Invoke[*marketservice.Service](i)
-		if err != nil {
-			return nil, err
-		}
-		return assetservice.New(repo, mkt), nil
-	})
 
-	do.Provide(injector, func(i do.Injector) (*portfoliorepo.AgentRepository, error) {
-		db, err := do.Invoke[*sqlx.DB](i)
-		if err != nil {
-			return nil, err
-		}
-		return portfoliorepo.New(db), nil
-	})
-
-	do.Provide(injector, func(i do.Injector) (*portfolioservice.PortfolioAgentService, error) {
-		assetSvc, err := do.Invoke[*assetservice.AssetAgentService](i)
-		if err != nil {
-			return nil, err
-		}
-		repo, err := do.Invoke[*portfoliorepo.AgentRepository](i)
-		if err != nil {
-			return nil, err
-		}
-		return portfolioservice.New(assetSvc, repo), nil
+		return portfolio.NewAgent(repo, assetAgentsInitFunc), nil
 	})
 
 	return injector, nil

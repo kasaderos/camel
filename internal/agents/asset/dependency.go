@@ -8,11 +8,11 @@ import (
 )
 
 type AgentRepository interface {
-	CreateAgent(ctx context.Context, agent model.AssetAgent) error
+	CreateAgent(ctx context.Context, agent *model.AssetAgent) error
 	FetchInfo(ctx context.Context, id string) (model.AssetAgent, error)
 	Withdraw(ctx context.Context, id string, q float64) error
 	Deposit(ctx context.Context, id string, q float64) error
-	UpdateState(ctx context.Context, id string, state map[string]string) error
+	UpdateState(ctx context.Context, id string, state model.State) error
 }
 
 type MarketService interface {

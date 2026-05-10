@@ -24,6 +24,7 @@ require (
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/samber/go-type-to-string v1.8.0 // indirect
+	github.com/shopspring/decimal v1.4.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.36.0 // indirect

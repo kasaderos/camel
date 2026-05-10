@@ -2,45 +2,63 @@ package asset
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"time"
 
 	"github.com/kasaderos/camel/internal/model"
+	"github.com/shopspring/decimal"
 )
 
-type AssetAgentService struct {
+type Agent struct {
+	model.AssetAgent
+
 	repo   AgentRepository
 	market MarketService
 }
 
-func New(repo AgentRepository, market MarketService) *AssetAgentService {
-	return &AssetAgentService{
+func NewAgent(repo AgentRepository, market MarketService, opts ...Option) (*Agent, error) {
+	a := &Agent{
 		repo:   repo,
 		market: market,
 	}
-}
 
-func (s *AssetAgentService) CreateAgent(
-	ctx context.Context,
-	agent model.AssetAgent,
-) error {
-	return s.repo.CreateAgent(ctx, agent)
-}
-
-func (s *AssetAgentService) FetchInfo(
-	ctx context.Context,
-	agentID string,
-) (model.AssetAgent, error) {
-	if agentID == "" {
-		return model.AssetAgent{}, errors.New("agent ID is required")
+	for _, opt := range opts {
+		if err := opt(a); err != nil {
+			return nil, err
+		}
 	}
 
-	return s.repo.FetchInfo(ctx, agentID)
+	return a, nil
 }
 
-func (s *AssetAgentService) Withdraw(
+func (a *Agent) Initalize(ctx context.Context, id string) error {
+	agent, err := a.repo.FetchInfo(ctx, id)
+	if err != nil {
+		return fmt.Errorf("fetch agent: %w", err)
+	}
+
+	a.AssetAgent = agent
+
+	return nil
+}
+
+func (a *Agent) CreateAgent(
+	ctx context.Context,
+	agent *model.AssetAgent,
+) error {
+	return a.repo.CreateAgent(ctx, agent)
+}
+
+func (a *Agent) FetchInfo(ctx context.Context) model.AssetAgent {
+	return a.AssetAgent
+}
+
+func (a *Agent) FetchState(ctx context.Context) model.State {
+	return a.State
+}
+
+func (a *Agent) Withdraw(
 	ctx context.Context,
 	agentID string,
 	amount float64,
@@ -49,7 +67,7 @@ func (s *AssetAgentService) Withdraw(
 		return model.ErrInvalidAmount
 	}
 
-	err := s.repo.Withdraw(ctx, agentID, amount)
+	err := a.repo.Withdraw(ctx, agentID, amount)
 	if err != nil {
 		return fmt.Errorf("service failed to withdraw: %w", err)
 	}
@@ -57,7 +75,7 @@ func (s *AssetAgentService) Withdraw(
 	return nil
 }
 
-func (s *AssetAgentService) Deposit(
+func (a *Agent) Deposit(
 	ctx context.Context,
 	agentID string,
 	amount float64,
@@ -66,7 +84,7 @@ func (s *AssetAgentService) Deposit(
 		return model.ErrInvalidAmount
 	}
 
-	err := s.repo.Deposit(ctx, agentID, amount)
+	err := a.repo.Deposit(ctx, agentID, amount)
 	if err != nil {
 		return fmt.Errorf("service failed to deposit: %w", err)
 	}
@@ -75,36 +93,23 @@ func (s *AssetAgentService) Deposit(
 }
 
 // UpdateState allows modifying the agent's state metadata
-func (s *AssetAgentService) UpdateState(
-	ctx context.Context,
-	agentID string,
-) (map[string]string, error) {
-	if agentID == "" {
-		return nil, errors.New("agent ID is required")
-	}
-
-	agent, err := s.FetchInfo(ctx, agentID)
+func (a *Agent) UpdateState(ctx context.Context) error {
+	state, err := a.getState(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch agent: %w", err)
+		return fmt.Errorf("failed to compute state: %w", err)
 	}
 
-	state, err := s.getState(ctx, agent)
+	err = a.repo.UpdateState(ctx, a.ID, state)
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute state: %w", err)
+		return fmt.Errorf("update state: %w", err)
 	}
 
-	err = s.repo.UpdateState(ctx, agentID, state)
-	if err != nil {
-		return nil, fmt.Errorf("update state: %w", err)
-	}
+	a.State = state
 
-	return state, nil
+	return nil
 }
 
-func (s *AssetAgentService) getState(
-	ctx context.Context,
-	agent model.AssetAgent,
-) (map[string]string, error) {
+func (a *Agent) getState(ctx context.Context) (model.State, error) {
 	// Asset agent settings
 	const (
 		lookback = 5
@@ -113,27 +118,30 @@ func (s *AssetAgentService) getState(
 
 	now := time.Now()
 
-	bars, err := s.market.FetchBars(
+	bars, err := a.market.FetchBars(
 		ctx,
-		agent.AssetID,
+		a.AssetID,
 		now.Add(-24*time.Hour*3*window),
 		now,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch market data: %w", err)
+		return model.State{}, fmt.Errorf("failed to fetch market data: %w", err)
 	}
 
 	lastBar := bars[len(bars)-1]
 
-	return map[string]string{
-		model.StateDate:            lastBar.Timestamp.Format(time.DateOnly),
-		model.EMA20Lookback5Change: calcEMAChange(bars, window, lookback),
-	}, nil
+	st := model.State{}
+	st.SetDate(lastBar.Timestamp)
+	st.SetEmaChange(calcEMAChange(bars, window, lookback))
+
+	a.State = st
+
+	return st, nil
 }
 
-func calcEMAChange(bars []model.Bar, window, lookback int) string {
+func calcEMAChange(bars []model.Bar, window, lookback int) decimal.Decimal {
 	if len(bars) < window {
-		return "undefined"
+		return decimal.NewFromFloat(0.0)
 	}
 
 	prices := extractClosePrices(bars)
@@ -141,7 +149,7 @@ func calcEMAChange(bars []model.Bar, window, lookback int) string {
 	emaValues := ema(prices, window)
 	changeValue := priceChange(emaValues, lookback)
 
-	return fmt.Sprintf("%.5f", changeValue)
+	return decimal.NewFromFloat(changeValue)
 }
 
 func extractClosePrices(bars []model.Bar) []float64 {
