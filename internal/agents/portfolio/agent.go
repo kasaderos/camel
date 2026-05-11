@@ -136,7 +136,12 @@ func (a *Agent) PrintInfo(ctx context.Context, w io.Writer) {
 
 	fmt.Fprintln(w, "")
 
-	weights, _ := a.Portfolio(ctx, 0.02)
+	weights, err := a.Portfolio(ctx, 0.02)
+	if err != nil {
+		fmt.Fprintf(w, "error calculating portfolio weights: %v\n", err)
+		return
+	}
+
 	if len(weights) > 0 {
 		wKeys := make([]string, 0, len(weights))
 		for k := range weights {
