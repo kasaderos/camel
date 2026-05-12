@@ -171,9 +171,8 @@ func (a *Agent) Portfolio(ctx context.Context, threshold float64) (map[string]fl
 	// Collect candidates above threshold
 	err := a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
 		agentInfo := agent.FetchInfo(ctx)
-		agentState := agent.FetchState(ctx)
 
-		score, ok := agentState.EmaChange()
+		score, ok := agentInfo.State.EmaChange()
 		if !ok {
 			slog.Error("agent state ema_change invalid", "id", agentInfo.ID)
 			return nil

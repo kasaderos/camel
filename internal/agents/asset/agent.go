@@ -64,14 +64,14 @@ func (a *Agent) FetchTotalSum(ctx context.Context) (float64, error) {
 
 func (a *Agent) BuyAsset(
 	ctx context.Context,
-	amount float64,
+	sum float64,
 ) error {
-	if amount <= 0 {
+	if sum <= 0 {
 		return model.ErrInvalidAmount
 	}
 
-	if a.Cash < amount {
-		return fmt.Errorf("insufficient cash: have %.2f, need %.2f", a.Cash, amount)
+	if a.Cash < sum {
+		return fmt.Errorf("insufficient cash: have %.2f, need %.2f", a.Cash, sum)
 	}
 
 	// Get current price to calculate quantity
@@ -80,7 +80,7 @@ func (a *Agent) BuyAsset(
 		return fmt.Errorf("failed to fetch current price: %w", err)
 	}
 
-	qty := amount / currentPrice
+	qty := sum / currentPrice
 
 	// Create market buy order
 	order, err := a.exchange.CreateMarketOrder(ctx, a.AssetID, qty, model.OrderSideBuy)
@@ -105,22 +105,22 @@ func (a *Agent) BuyAsset(
 
 func (a *Agent) SellAsset(
 	ctx context.Context,
-	amount float64,
+	qty float64,
 ) error {
 	if a.NoPositions() {
 		return nil
 	}
 
-	if amount <= 0 {
+	if qty <= 0 {
 		return model.ErrInvalidAmount
 	}
 
-	if a.AssetQty < amount {
-		return fmt.Errorf("insufficient asset quantity: have %.6f, need %.6f", a.AssetQty, amount)
+	if a.AssetQty < qty {
+		return fmt.Errorf("insufficient asset quantity: have %.6f, need %.6f", a.AssetQty, qty)
 	}
 
 	// Create market sell order
-	order, err := a.exchange.CreateMarketOrder(ctx, a.AssetID, amount, model.OrderSideSell)
+	order, err := a.exchange.CreateMarketOrder(ctx, a.AssetID, qty, model.OrderSideSell)
 	if err != nil {
 		return fmt.Errorf("failed to create sell order: %w", err)
 	}

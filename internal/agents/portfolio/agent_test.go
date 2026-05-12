@@ -78,33 +78,21 @@ func (s *PortfolioAgentTestSuite) TestPortfolio_CalculatesWeights() {
 	state1.SetEmaChange(0.05) // 5% above threshold
 	s.assetAgent1.EXPECT().
 		FetchInfo(s.ctx).
-		Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL"}).
-		Once()
-	s.assetAgent1.EXPECT().
-		FetchState(s.ctx).
-		Return(state1).
+		Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", State: state1}).
 		Once()
 
 	state2 := model.State{}
 	state2.SetEmaChange(0.03) // 3% above threshold
 	s.assetAgent2.EXPECT().
 		FetchInfo(s.ctx).
-		Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL"}).
-		Once()
-	s.assetAgent2.EXPECT().
-		FetchState(s.ctx).
-		Return(state2).
+		Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", State: state2}).
 		Once()
 
 	state3 := model.State{}
 	state3.SetEmaChange(0.01) // Below threshold (0.02)
 	s.assetAgent3.EXPECT().
 		FetchInfo(s.ctx).
-		Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT"}).
-		Once()
-	s.assetAgent3.EXPECT().
-		FetchState(s.ctx).
-		Return(state3).
+		Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", State: state3}).
 		Once()
 
 	weights, err := s.agent.Portfolio(s.ctx, 0.02)
@@ -128,18 +116,15 @@ func (s *PortfolioAgentTestSuite) TestPortfolio_NoValidAssets() {
 	// All assets below threshold
 	state1 := model.State{}
 	state1.SetEmaChange(0.01)
-	s.assetAgent1.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", AssetQty: 10.0}).Once()
-	s.assetAgent1.EXPECT().FetchState(s.ctx).Return(state1).Once()
+	s.assetAgent1.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", AssetQty: 10.0, State: state1}).Once()
 
 	state2 := model.State{}
 	state2.SetEmaChange(-0.02)
-	s.assetAgent2.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", AssetQty: 5.0}).Once()
-	s.assetAgent2.EXPECT().FetchState(s.ctx).Return(state2).Once()
+	s.assetAgent2.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", AssetQty: 5.0, State: state2}).Once()
 
 	state3 := model.State{}
 	state3.SetEmaChange(0.005)
-	s.assetAgent3.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", AssetQty: 2.0}).Once()
-	s.assetAgent3.EXPECT().FetchState(s.ctx).Return(state3).Once()
+	s.assetAgent3.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", AssetQty: 2.0, State: state3}).Once()
 
 	weights, err := s.agent.Portfolio(s.ctx, 0.02)
 
@@ -156,18 +141,15 @@ func (s *PortfolioAgentTestSuite) TestRebalance_FullCycle() {
 	// Step 2: Portfolio calculation - setup states
 	state1 := model.State{}
 	state1.SetEmaChange(0.06) // 60% of total score
-	s.assetAgent1.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", AssetQty: 10.0}).Once()
-	s.assetAgent1.EXPECT().FetchState(s.ctx).Return(state1).Once()
+	s.assetAgent1.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", AssetQty: 10.0, State: state1}).Once()
 
 	state2 := model.State{}
 	state2.SetEmaChange(0.04) // 40% of total score
-	s.assetAgent2.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", AssetQty: 5.0}).Once()
-	s.assetAgent2.EXPECT().FetchState(s.ctx).Return(state2).Once()
+	s.assetAgent2.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", AssetQty: 5.0, State: state2}).Once()
 
 	state3 := model.State{}
 	state3.SetEmaChange(0.01) // Below threshold, not included
-	s.assetAgent3.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", AssetQty: 2.0}).Once()
-	s.assetAgent3.EXPECT().FetchState(s.ctx).Return(state3).Once()
+	s.assetAgent3.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", AssetQty: 2.0, State: state3}).Once()
 
 	// Step 3: Calculate portfolio value using FetchTotalSum
 	// Total: 1600 + 1050 + 200 = 2850
@@ -226,18 +208,15 @@ func (s *PortfolioAgentTestSuite) TestRebalance_PriceError() {
 	// Step 2: Portfolio calculation
 	state1 := model.State{}
 	state1.SetEmaChange(0.05)
-	s.assetAgent1.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", AssetQty: 10.0}).Once()
-	s.assetAgent1.EXPECT().FetchState(s.ctx).Return(state1).Once()
+	s.assetAgent1.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", AssetQty: 10.0, State: state1}).Once()
 
 	state2 := model.State{}
 	state2.SetEmaChange(0.03)
-	s.assetAgent2.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", AssetQty: 5.0}).Once()
-	s.assetAgent2.EXPECT().FetchState(s.ctx).Return(state2).Once()
+	s.assetAgent2.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", AssetQty: 5.0, State: state2}).Once()
 
 	state3 := model.State{}
 	state3.SetEmaChange(0.01)
-	s.assetAgent3.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", AssetQty: 2.0}).Once()
-	s.assetAgent3.EXPECT().FetchState(s.ctx).Return(state3).Once()
+	s.assetAgent3.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", AssetQty: 2.0, State: state3}).Once()
 
 	// Step 3: FetchTotalSum fails
 	s.assetAgent1.EXPECT().FetchTotalSum(s.ctx).Return(0.0, errors.New("fetch total sum failed")).Once()
@@ -257,18 +236,15 @@ func (s *PortfolioAgentTestSuite) TestRebalance_SellPartial() {
 	// Step 2: Portfolio calculation - AAPL weight decreases from 70% to 60%
 	state1 := model.State{}
 	state1.SetEmaChange(0.06) // 60% target
-	s.assetAgent1.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", AssetQty: 10.0}).Once()
-	s.assetAgent1.EXPECT().FetchState(s.ctx).Return(state1).Once()
+	s.assetAgent1.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", AssetQty: 10.0, State: state1}).Once()
 
 	state2 := model.State{}
 	state2.SetEmaChange(0.04) // 40% target
-	s.assetAgent2.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", AssetQty: 5.0}).Once()
-	s.assetAgent2.EXPECT().FetchState(s.ctx).Return(state2).Once()
+	s.assetAgent2.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", AssetQty: 5.0, State: state2}).Once()
 
 	state3 := model.State{}
 	state3.SetEmaChange(0.01) // Below threshold
-	s.assetAgent3.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", AssetQty: 2.0}).Once()
-	s.assetAgent3.EXPECT().FetchState(s.ctx).Return(state3).Once()
+	s.assetAgent3.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", AssetQty: 2.0, State: state3}).Once()
 
 	// Step 3: Calculate portfolio value
 	// Total = 1400
@@ -318,18 +294,15 @@ func (s *PortfolioAgentTestSuite) TestRebalance_BuyPartial() {
 	// Step 2: Portfolio calculation - both AAPL and GOOGL need to buy
 	state1 := model.State{}
 	state1.SetEmaChange(0.06) // 60% target weight
-	s.assetAgent1.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", AssetQty: 10.0}).Once()
-	s.assetAgent1.EXPECT().FetchState(s.ctx).Return(state1).Once()
+	s.assetAgent1.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", AssetQty: 10.0, State: state1}).Once()
 
 	state2 := model.State{}
 	state2.SetEmaChange(0.04) // 40% target weight
-	s.assetAgent2.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", AssetQty: 5.0}).Once()
-	s.assetAgent2.EXPECT().FetchState(s.ctx).Return(state2).Once()
+	s.assetAgent2.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", AssetQty: 5.0, State: state2}).Once()
 
 	state3 := model.State{}
 	state3.SetEmaChange(0.01) // Below threshold, not included
-	s.assetAgent3.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", AssetQty: 2.0}).Once()
-	s.assetAgent3.EXPECT().FetchState(s.ctx).Return(state3).Once()
+	s.assetAgent3.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", AssetQty: 2.0, State: state3}).Once()
 
 	// Step 3: Calculate portfolio value
 	// Total portfolio = 2000
@@ -378,18 +351,15 @@ func (s *PortfolioAgentTestSuite) TestRebalance_OnlyQuantitiesNoCash() {
 	// Step 2: Portfolio calculation
 	state1 := model.State{}
 	state1.SetEmaChange(0.06) // 60% target weight
-	s.assetAgent1.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", AssetQty: 10.0}).Once()
-	s.assetAgent1.EXPECT().FetchState(s.ctx).Return(state1).Once()
+	s.assetAgent1.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-1", AssetID: "AAPL", AssetQty: 10.0, State: state1}).Once()
 
 	state2 := model.State{}
 	state2.SetEmaChange(0.04) // 40% target weight
-	s.assetAgent2.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", AssetQty: 5.0}).Once()
-	s.assetAgent2.EXPECT().FetchState(s.ctx).Return(state2).Once()
+	s.assetAgent2.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-2", AssetID: "GOOGL", AssetQty: 5.0, State: state2}).Once()
 
 	state3 := model.State{}
 	state3.SetEmaChange(0.01) // Below threshold, not included
-	s.assetAgent3.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", AssetQty: 2.0}).Once()
-	s.assetAgent3.EXPECT().FetchState(s.ctx).Return(state3).Once()
+	s.assetAgent3.EXPECT().FetchInfo(s.ctx).Return(model.AssetAgent{ID: "agent-3", AssetID: "MSFT", AssetQty: 2.0, State: state3}).Once()
 
 	// Step 3: Calculate portfolio value (all in asset quantities, no cash)
 	// AAPL: 100 shares @ $150 = $15,000 (total value from qty only, cash = 0)

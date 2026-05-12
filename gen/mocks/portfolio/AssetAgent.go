@@ -341,52 +341,6 @@ func (_c *AssetAgent_FetchPrice_Call) RunAndReturn(run func(context.Context) (fl
 	return _c
 }
 
-// FetchState provides a mock function with given fields: _a0
-func (_m *AssetAgent) FetchState(_a0 context.Context) model.State {
-	ret := _m.Called(_a0)
-
-	if len(ret) == 0 {
-		panic("no return value specified for FetchState")
-	}
-
-	var r0 model.State
-	if rf, ok := ret.Get(0).(func(context.Context) model.State); ok {
-		r0 = rf(_a0)
-	} else {
-		r0 = ret.Get(0).(model.State)
-	}
-
-	return r0
-}
-
-// AssetAgent_FetchState_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FetchState'
-type AssetAgent_FetchState_Call struct {
-	*mock.Call
-}
-
-// FetchState is a helper method to define mock.On call
-//   - _a0 context.Context
-func (_e *AssetAgent_Expecter) FetchState(_a0 interface{}) *AssetAgent_FetchState_Call {
-	return &AssetAgent_FetchState_Call{Call: _e.mock.On("FetchState", _a0)}
-}
-
-func (_c *AssetAgent_FetchState_Call) Run(run func(_a0 context.Context)) *AssetAgent_FetchState_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *AssetAgent_FetchState_Call) Return(_a0 model.State) *AssetAgent_FetchState_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *AssetAgent_FetchState_Call) RunAndReturn(run func(context.Context) model.State) *AssetAgent_FetchState_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // FetchTotalSum provides a mock function with given fields: ctx
 func (_m *AssetAgent) FetchTotalSum(ctx context.Context) (float64, error) {
 	ret := _m.Called(ctx)
@@ -589,63 +543,6 @@ func (_c *AssetAgent_Withdraw_Call) Return(_a0 model.AssetAgent, _a1 error) *Ass
 }
 
 func (_c *AssetAgent_Withdraw_Call) RunAndReturn(run func(context.Context, float64) (model.AssetAgent, error)) *AssetAgent_Withdraw_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WithdrawWithBuy provides a mock function with given fields: ctx, sum
-func (_m *AssetAgent) WithdrawWithBuy(ctx context.Context, sum float64) (model.AssetAgent, error) {
-	ret := _m.Called(ctx, sum)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WithdrawWithBuy")
-	}
-
-	var r0 model.AssetAgent
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, float64) (model.AssetAgent, error)); ok {
-		return rf(ctx, sum)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, float64) model.AssetAgent); ok {
-		r0 = rf(ctx, sum)
-	} else {
-		r0 = ret.Get(0).(model.AssetAgent)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, float64) error); ok {
-		r1 = rf(ctx, sum)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// AssetAgent_WithdrawWithBuy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WithdrawWithBuy'
-type AssetAgent_WithdrawWithBuy_Call struct {
-	*mock.Call
-}
-
-// WithdrawWithBuy is a helper method to define mock.On call
-//   - ctx context.Context
-//   - sum float64
-func (_e *AssetAgent_Expecter) WithdrawWithBuy(ctx interface{}, sum interface{}) *AssetAgent_WithdrawWithBuy_Call {
-	return &AssetAgent_WithdrawWithBuy_Call{Call: _e.mock.On("WithdrawWithBuy", ctx, sum)}
-}
-
-func (_c *AssetAgent_WithdrawWithBuy_Call) Run(run func(ctx context.Context, sum float64)) *AssetAgent_WithdrawWithBuy_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(float64))
-	})
-	return _c
-}
-
-func (_c *AssetAgent_WithdrawWithBuy_Call) Return(_a0 model.AssetAgent, _a1 error) *AssetAgent_WithdrawWithBuy_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *AssetAgent_WithdrawWithBuy_Call) RunAndReturn(run func(context.Context, float64) (model.AssetAgent, error)) *AssetAgent_WithdrawWithBuy_Call {
 	_c.Call.Return(run)
 	return _c
 }
