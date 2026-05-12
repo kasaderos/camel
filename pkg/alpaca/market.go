@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func (s *MarketDataClient) FetchBars(
+func (s *MarketClient) FetchBars(
 	ctx context.Context,
 	symbol string,
 	start time.Time,

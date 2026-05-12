@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
 	"sort"
 	"time"
 
@@ -26,16 +27,112 @@ func NewAgent(agent model.PortfolioAgent, repo AgentRepository, assetAgents []As
 	}
 }
 
-func (a *Agent) Rebalance(ctx context.Context) error {
-	const threshold = 0.02
-
-	// update state of all asset agents in portfolio
+// Coordinate executes a function on each asset agent in the portfolio
+func (a *Agent) Coordinate(ctx context.Context, fn func(context.Context, AssetAgent) error) error {
 	for _, assetAgent := range a.assetAgents {
-		err := assetAgent.UpdateState(ctx)
-		if err != nil {
-			return fmt.Errorf("update asset agent state: %w", err)
+		if err := fn(ctx, assetAgent); err != nil {
+			return err
 		}
 	}
+
+	return nil
+}
+
+func (a *Agent) Rebalance(ctx context.Context) error {
+	// 1. Update state of all asset agents in portfolio
+	err := a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
+		return agent.UpdateState(ctx)
+	})
+	if err != nil {
+		return fmt.Errorf("update asset agent states: %w", err)
+	}
+
+	// 2. Get target newWeights based on current states
+	newWeights, err := a.Portfolio(ctx, 0.02) // Using threshold of 0.02
+	if err != nil {
+		return fmt.Errorf("calculate portfolio weights: %w", err)
+	}
+
+	// 3. Calculate total portfolio value (all assets + cash)
+	var totalPortfolioValue float64
+
+	err = a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
+		sum, err := agent.FetchTotalSum(ctx)
+		if err != nil {
+			return fmt.Errorf("agent fetch total sum: %w", err)
+		}
+
+		totalPortfolioValue += sum
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	freeCash := 0.0
+
+	err = a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
+		agentInfo := agent.FetchInfo(ctx)
+
+		newWeight, exist := newWeights[agentInfo.AssetID]
+		if !exist {
+			// just sell all and withdraw cash
+			agentInfo, err := agent.ClosePosition(ctx)
+			if err != nil {
+				return fmt.Errorf("agent close position: %w", err)
+			}
+
+			freeCash += agentInfo.Cash
+			return nil
+		}
+
+		agentTotalSum, err := agent.FetchTotalSum(ctx)
+		if err != nil {
+			return fmt.Errorf("agent fetch total sum: %w", err)
+		}
+
+		newTotalSum := roundMoney(totalPortfolioValue * newWeight)
+
+		agentWithdrawSum := roundMoney(agentTotalSum - newTotalSum)
+		if agentWithdrawSum > 0 {
+			agentInfo, err := agent.WithdrawWithSell(ctx, agentWithdrawSum)
+			if err != nil {
+				return fmt.Errorf("agent withdraw with sell: %w", err)
+			}
+
+			freeCash += agentInfo.Cash
+		}
+
+		return nil
+	})
+
+	err = a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
+		agentInfo := agent.FetchInfo(ctx)
+
+		agentTotalSum, err := agent.FetchTotalSum(ctx)
+		if err != nil {
+			return fmt.Errorf("agent fetch total sum: %w", err)
+		}
+		newWeight, exist := newWeights[agentInfo.AssetID]
+		if !exist {
+			return nil
+		}
+
+		newTotalSum := roundMoney(totalPortfolioValue * newWeight)
+
+		agentDepositSum := roundMoney(newTotalSum - agentTotalSum)
+		if agentDepositSum > 0 && freeCash >= agentDepositSum {
+			_, err := agent.DepositWithBuy(ctx, agentDepositSum)
+			if err != nil {
+				return fmt.Errorf("agent deposit with buy: %w", err)
+			}
+
+			freeCash -= agentDepositSum
+		}
+
+		return nil
+	})
 
 	return nil
 }
@@ -155,4 +252,9 @@ func (a *Agent) PrintInfo(ctx context.Context, w io.Writer) {
 			fmt.Fprintf(w, "- asset_id=%s weight=%.4f\n", k, weights[k])
 		}
 	}
+}
+
+// roundMoney rounds a float64 to 2 decimal places (cents)
+func roundMoney(amount float64) float64 {
+	return math.Round(amount*100) / 100
 }

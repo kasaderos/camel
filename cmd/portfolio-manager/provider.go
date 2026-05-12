@@ -71,16 +71,28 @@ func provide() (do.Injector, error) {
 		return marketrepo.New(db), nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*alpaca.MarketDataClient, error) {
+	do.Provide(injector, func(i do.Injector) (*alpaca.MarketClient, error) {
 		cfg, err := do.Invoke[*config](i)
 		if err != nil {
 			return nil, err
 		}
-		return alpaca.NewMarketDataClient(cfg.Alpaca.APIKey, cfg.Alpaca.Secret, cfg.Alpaca.MarketURL)
+		return alpaca.NewMarketClient(cfg.Alpaca.APIKey, cfg.Alpaca.Secret, cfg.Alpaca.MarketURL)
+	})
+
+	do.Provide(injector, func(i do.Injector) (*alpaca.TradingClient, error) {
+		cfg, err := do.Invoke[*config](i)
+		if err != nil {
+			return nil, err
+		}
+		marketClient, err := do.Invoke[*alpaca.MarketClient](i)
+		if err != nil {
+			return nil, err
+		}
+		return alpaca.NewTradingClient(cfg.Alpaca.APIKey, cfg.Alpaca.Secret, cfg.Alpaca.TradingURL, marketClient)
 	})
 
 	do.Provide(injector, func(i do.Injector) (*marketservice.Service, error) {
-		client, err := do.Invoke[*alpaca.MarketDataClient](i)
+		client, err := do.Invoke[*alpaca.MarketClient](i)
 		if err != nil {
 			return nil, err
 		}
@@ -100,7 +112,11 @@ func provide() (do.Injector, error) {
 		if err != nil {
 			return nil, err
 		}
-		return agent.New(repo, repo, market), nil
+		trading, err := do.Invoke[*alpaca.TradingClient](i)
+		if err != nil {
+			return nil, err
+		}
+		return agent.New(repo, repo, market, trading), nil
 	})
 
 	return injector, nil

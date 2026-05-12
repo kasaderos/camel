@@ -29,3 +29,13 @@ type AssetAgent interface {
 	FetchState(context.Context) model.State
 	UpdateState(context.Context) error
 }
+
+type Exchanger interface {
+	CreateMarketOrder(
+		ctx context.Context,
+		symbol string,
+		qty float64,
+		side string, // "buy" or "sell"
+	) (*model.Order, error)
+	FetchPrice(ctx context.Context, assetID string) (float64, error)
+}

@@ -8,6 +8,7 @@ import (
 type (
 	AssetAgentRepository     = asset.AgentRepository
 	MarketService            = asset.MarketService
+	Exchanger                = asset.Exchanger
 	PortfolioAssetAgent      = portfolio.AssetAgent
 	PortfolioAgentRepository = portfolio.AgentRepository
 )

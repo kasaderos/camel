@@ -16,17 +16,20 @@ type Service struct {
 	assetAgentRepository     AssetAgentRepository
 	portfolioAgentRepository PortfolioAgentRepository
 	market                   MarketService
+	exchange                 Exchanger
 }
 
 func New(
 	assetRepo AssetAgentRepository,
 	portfolioRepo PortfolioAgentRepository,
 	market MarketService,
+	exchange Exchanger,
 ) *Service {
 	return &Service{
 		assetAgentRepository:     assetRepo,
 		portfolioAgentRepository: portfolioRepo,
 		market:                   market,
+		exchange:                 exchange,
 	}
 }
 
@@ -41,6 +44,7 @@ func (m *Service) InitAssetAgent(ctx context.Context, id string) (*asset.Agent, 
 		agent,
 		m.assetAgentRepository,
 		m.market,
+		m.exchange,
 	), nil
 }
 

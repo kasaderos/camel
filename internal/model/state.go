@@ -49,3 +49,17 @@ func (s *State) EmaChange() (float64, bool) {
 
 	return f, true
 }
+
+func (s *State) Date() (string, bool) {
+	value, ok := s.data["date"]
+	if !ok {
+		return "", false
+	}
+
+	str, ok := value.(string)
+	if !ok {
+		return "", false
+	}
+
+	return str, true
+}

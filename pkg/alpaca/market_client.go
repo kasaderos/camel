@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-type MarketDataClient struct {
+type MarketClient struct {
 	client *http.Client
 
 	baseURL string
@@ -13,13 +13,13 @@ type MarketDataClient struct {
 	secret  string
 }
 
-func NewMarketDataClient(
+func NewMarketClient(
 	apikey, apisecret string,
 	baseURL string,
-) (*MarketDataClient, error) {
-	slog.Info("alpaca", "baseURL", baseURL, "apikey", apikey, "apisecret", apisecret)
+) (*MarketClient, error) {
+	slog.Info("alpaca", "baseURL", baseURL)
 
-	return &MarketDataClient{
+	return &MarketClient{
 		client: &http.Client{},
 
 		baseURL: baseURL,
