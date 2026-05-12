@@ -37,6 +37,7 @@ func (c *TradingClient) FetchOrders(
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch orders: %w", err)
 	}
+
 	return orders, nil
 }
 
@@ -59,6 +60,7 @@ func (c *TradingClient) CreateMarketOrder(
 	side string,
 ) (*model.Order, error) {
 	var orderSide alpaca.Side
+
 	switch side {
 	case "buy":
 		orderSide = alpaca.Buy

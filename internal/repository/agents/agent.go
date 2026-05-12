@@ -13,6 +13,7 @@ type jsonMap map[string]any
 
 func (j *jsonMap) Scan(src any) error {
 	var b []byte
+
 	switch v := src.(type) {
 	case []byte:
 		b = v
@@ -24,6 +25,7 @@ func (j *jsonMap) Scan(src any) error {
 	default:
 		return fmt.Errorf("jsonMap: cannot scan type %T", src)
 	}
+
 	return json.Unmarshal(b, (*map[string]any)(j))
 }
 
@@ -31,10 +33,12 @@ func (j jsonMap) Value() (driver.Value, error) {
 	if j == nil {
 		return "{}", nil
 	}
+
 	b, err := json.Marshal(map[string]any(j))
 	if err != nil {
 		return nil, err
 	}
+
 	return string(b), nil
 }
 

@@ -29,3 +29,7 @@ type PortfolioAgent struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+func (a AssetAgent) NoPositions() bool {
+	return a.AssetQty < 1e-3
+}

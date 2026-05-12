@@ -2,26 +2,34 @@ package agents
 
 import (
 	"context"
-	"testing"
 
 	"github.com/kasaderos/camel/pkg/testutils/testsuites"
 )
 
-// setupTestDB creates a test database with migrations applied
-func setupTestDB(t *testing.T) (*AgentRepository, *testsuites.PostgresContainer) {
-	t.Helper()
+// RepositoryTestSuite is a common test suite for all repository tests
+// It provides a shared PostgreSQL database and repository instance
+type RepositoryTestSuite struct {
+	testsuites.PostgresSuite
+	repo *AgentRepository
+}
 
-	ctx := context.Background()
-	pgContainer := testsuites.NewPostgresContainer(ctx, t)
+// SetupSuite runs once before all tests in the suite
+func (s *RepositoryTestSuite) SetupSuite() {
+	s.PostgresSuite.SetupSuite()
+	s.RunMigrations("../../../migrations")
+	s.repo = New(s.DB)
+}
 
-	// Run migrations
-	pgContainer.RunMigrations(t, "../../../migrations")
+// TearDownTest runs after each test to clean up
+func (s *RepositoryTestSuite) TearDownTest() {
+	s.Truncate("asset_agents", "portfolio_agents")
+}
 
-	repo := New(pgContainer.DB)
-
-	t.Cleanup(func() {
-		pgContainer.Close(ctx, t)
-	})
-
-	return repo, pgContainer
+// createPortfolioAgent is a helper to create a portfolio agent for tests
+func (s *RepositoryTestSuite) createPortfolioAgent(id string) {
+	_, err := s.DB.ExecContext(context.Background(), `
+		INSERT INTO portfolio_agents (id, portfolio_id)
+		VALUES ($1, $1)
+	`, id)
+	s.Require().NoError(err)
 }

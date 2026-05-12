@@ -23,6 +23,11 @@ func main() {
 						Usage:    "CSV file containing asset IDs (one per line or in the first column)",
 						Required: true,
 					},
+					&cli.StringFlag{
+						Name:     "cash",
+						Usage:    "initial balance",
+						Required: true,
+					},
 				},
 				Action: createPortfolio,
 			},

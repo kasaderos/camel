@@ -1,125 +1,81 @@
+// Package testsuites provides reusable test suite components for integration testing.
+//
+// # Usage Patterns
+//
+// ## Pattern 1: Direct Container Usage (for helper functions)
+//
+// Use NewPostgresContainer directly in test helper functions:
+//
+//	func setupTestDB(t *testing.T) (*Repository, *testsuites.Postgres) {
+//	    ctx := context.Background()
+//	    pg := testsuites.NewPostgresContainer(ctx, t)
+//	    pg.RunMigrations(t, "../../../migrations")
+//	    repo := NewRepository(pg.DB)
+//	    t.Cleanup(func() { pg.Close(ctx, t) })
+//	    return repo, pg
+//	}
+//
+// ## Pattern 2: Suite Embedding (for testify/suite)
+//
+// Embed PostgresSuite in your test suite:
+//
+//	type MyRepoTestSuite struct {
+//	    testsuites.PostgresSuite
+//	    repo *Repository
+//	}
+//
+//	func (s *MyRepoTestSuite) SetupSuite() {
+//	    s.PostgresSuite.SetupSuite()
+//	    s.RunMigrations("../../../migrations")
+//	    s.repo = NewRepository(s.DB)
+//	}
 package testsuites
 
 import (
 	"context"
-	"fmt"
-	"path/filepath"
 	"testing"
-	"time"
 
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/kasaderos/camel/pkg/testutils/containers"
+	"github.com/stretchr/testify/suite"
 )
 
-// PostgresContainer wraps a PostgreSQL testcontainer instance
-type PostgresContainer struct {
-	container testcontainers.Container
-	DB        *sqlx.DB
-	ConnStr   string
+// Postgres wraps containers.Postgres to provide it via testsuites package
+type Postgres = containers.Postgres
+
+// NewPostgresContainer creates a new PostgreSQL container for testing
+func NewPostgresContainer(ctx context.Context, t *testing.T) *Postgres {
+	return containers.NewPostgresContainer(ctx, t)
 }
 
-// NewPostgresContainer creates and starts a new PostgreSQL container for testing
-func NewPostgresContainer(ctx context.Context, t *testing.T) *PostgresContainer {
-	t.Helper()
+// PostgresSuite is a test suite that provides a PostgreSQL database
+type PostgresSuite struct {
+	suite.Suite
+	Postgres *Postgres
+	DB       *sqlx.DB
+	ctx      context.Context
+}
 
-	req := testcontainers.ContainerRequest{
-		Image:        "postgres:16-alpine",
-		ExposedPorts: []string{"5432/tcp"},
-		Env: map[string]string{
-			"POSTGRES_USER":     "test",
-			"POSTGRES_PASSWORD": "test",
-			"POSTGRES_DB":       "testdb",
-		},
-		WaitingFor: wait.ForLog("database system is ready to accept connections").
-			WithOccurrence(2).
-			WithStartupTimeout(60 * time.Second),
-	}
+// SetupSuite runs once before all tests in the suite
+func (s *PostgresSuite) SetupSuite() {
+	s.ctx = context.Background()
+	s.Postgres = NewPostgresContainer(s.ctx, s.T())
+	s.DB = s.Postgres.DB
+}
 
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-	if err != nil {
-		t.Fatalf("failed to start postgres container: %v", err)
-	}
-
-	host, err := container.Host(ctx)
-	if err != nil {
-		t.Fatalf("failed to get container host: %v", err)
-	}
-
-	port, err := container.MappedPort(ctx, "5432")
-	if err != nil {
-		t.Fatalf("failed to get container port: %v", err)
-	}
-
-	connStr := fmt.Sprintf("postgres://test:test@%s:%s/testdb?sslmode=disable", host, port.Port())
-
-	db, err := sqlx.Connect("postgres", connStr)
-	if err != nil {
-		t.Fatalf("failed to connect to database: %v", err)
-	}
-
-	return &PostgresContainer{
-		container: container,
-		DB:        db,
-		ConnStr:   connStr,
+// TearDownSuite runs once after all tests in the suite
+func (s *PostgresSuite) TearDownSuite() {
+	if s.Postgres != nil {
+		s.Postgres.Close(s.ctx, s.T())
 	}
 }
 
-// RunMigrations runs database migrations from the given migrations directory
-func (pc *PostgresContainer) RunMigrations(t *testing.T, migrationsPath string) {
-	t.Helper()
-
-	absPath, err := filepath.Abs(migrationsPath)
-	if err != nil {
-		t.Fatalf("failed to get absolute path: %v", err)
-	}
-
-	m, err := migrate.New(
-		fmt.Sprintf("file://%s", absPath),
-		pc.ConnStr,
-	)
-	if err != nil {
-		t.Fatalf("failed to create migrate instance: %v", err)
-	}
-	defer m.Close()
-
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		t.Fatalf("failed to run migrations: %v", err)
-	}
+// RunMigrations is a helper to run migrations in tests
+func (s *PostgresSuite) RunMigrations(migrationsPath string) {
+	s.Postgres.RunMigrations(s.T(), migrationsPath)
 }
 
-// Close terminates the container and closes the database connection
-func (pc *PostgresContainer) Close(ctx context.Context, t *testing.T) {
-	t.Helper()
-
-	if pc.DB != nil {
-		if err := pc.DB.Close(); err != nil {
-			t.Errorf("failed to close database: %v", err)
-		}
-	}
-
-	if pc.container != nil {
-		if err := pc.container.Terminate(ctx); err != nil {
-			t.Errorf("failed to terminate container: %v", err)
-		}
-	}
-}
-
-// Truncate truncates all tables in the database for cleanup between tests
-func (pc *PostgresContainer) Truncate(t *testing.T, tables ...string) {
-	t.Helper()
-
-	for _, table := range tables {
-		_, err := pc.DB.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table))
-		if err != nil {
-			t.Fatalf("failed to truncate table %s: %v", table, err)
-		}
-	}
+// Truncate is a helper to truncate tables between tests
+func (s *PostgresSuite) Truncate(tables ...string) {
+	s.Postgres.Truncate(s.T(), tables...)
 }

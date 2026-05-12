@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -37,7 +38,7 @@ func migrateUp(ctx context.Context, c *cli.Command) error {
 		return err
 	}
 
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return err
 	}
 
@@ -70,7 +71,7 @@ func migrateDrop(ctx context.Context, c *cli.Command) error {
 		return err
 	}
 
-	if err := m.Drop(); err != nil && err != migrate.ErrNoChange {
+	if err := m.Drop(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return err
 	}
 

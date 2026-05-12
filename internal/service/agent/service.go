@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/samber/lo"
-
 	"github.com/kasaderos/camel/internal/agents/asset"
 	"github.com/kasaderos/camel/internal/agents/portfolio"
 	"github.com/kasaderos/camel/internal/model"
+	"github.com/samber/lo"
 )
 
 // Service tracks live asset agents and drives their monitoring lifecycle.
@@ -71,11 +70,12 @@ func (m *Service) InitPortfolioAgent(ctx context.Context, id string) (*portfolio
 
 // CreatePortfolioAgent persists a new portfolio with one asset agent per asset,
 // then returns it fully initialized and ready for use.
-func (m *Service) CreatePortfolioAgent(ctx context.Context, assets []model.Asset) (*portfolio.Agent, error) {
+func (m *Service) CreatePortfolioAgent(ctx context.Context, assets []model.Asset, cash float64) (*portfolio.Agent, error) {
 	agentModels := lo.Map(assets, func(a model.Asset, i int) model.AssetAgent {
 		return model.AssetAgent{
 			ID:      fmt.Sprintf("asset-agent-%d", i+1),
 			AssetID: a.ID,
+			Cash:    cash / float64(len(assets)),
 		}
 	})
 

@@ -35,6 +35,7 @@ func (r *AgentRepository) Create(ctx context.Context, assets []model.AssetAgent)
 		if err := r.CreateAgent(ctx, &assets[i]); err != nil {
 			return model.PortfolioAgent{}, fmt.Errorf("create asset agent: %w", err)
 		}
+
 		assetAgentIDs = append(assetAgentIDs, assets[i].ID)
 	}
 

@@ -47,9 +47,14 @@ func (a *Agent) FetchPrice(ctx context.Context) (float64, error) {
 }
 
 func (a *Agent) FetchTotalSum(ctx context.Context) (float64, error) {
-	price, err := a.FetchPrice(ctx)
-	if err != nil {
-		return 0.0, fmt.Errorf("fetch price for %s: %w", a.AssetID, err)
+	var price float64
+	var err error
+
+	if a.AssetQty > 0 {
+		price, err = a.FetchPrice(ctx)
+		if err != nil {
+			return 0.0, fmt.Errorf("fetch price for %s: %w", a.AssetID, err)
+		}
 	}
 
 	agentTotalSum := a.Cash + a.AssetQty*price
@@ -102,6 +107,10 @@ func (a *Agent) SellAsset(
 	ctx context.Context,
 	amount float64,
 ) error {
+	if a.NoPositions() {
+		return nil
+	}
+
 	if amount <= 0 {
 		return model.ErrInvalidAmount
 	}
@@ -144,7 +153,7 @@ func (a *Agent) WithdrawWithSell(
 	ctx context.Context,
 	sum float64,
 ) (model.AssetAgent, error) {
-	if sum < a.Cash {
+	if sum < a.Cash || a.NoPositions() {
 		return a.Withdraw(ctx, sum)
 	}
 

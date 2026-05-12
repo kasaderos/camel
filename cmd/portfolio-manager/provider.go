@@ -36,6 +36,7 @@ func provide() (do.Injector, error) {
 		if err != nil {
 			return nil, fmt.Errorf("postgres dsn: %w", err)
 		}
+
 		if strings.TrimSpace(dsn) == "" {
 			return nil, errors.New("postgres config is required (set DATABASE_URL or POSTGRES_* env vars)")
 		}
@@ -60,6 +61,7 @@ func provide() (do.Injector, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return agents.New(db), nil
 	})
 
@@ -68,6 +70,7 @@ func provide() (do.Injector, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return marketrepo.New(db), nil
 	})
 
@@ -76,6 +79,7 @@ func provide() (do.Injector, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return alpaca.NewMarketClient(cfg.Alpaca.APIKey, cfg.Alpaca.Secret, cfg.Alpaca.MarketURL)
 	})
 
@@ -84,10 +88,12 @@ func provide() (do.Injector, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		marketClient, err := do.Invoke[*alpaca.MarketClient](i)
 		if err != nil {
 			return nil, err
 		}
+
 		return alpaca.NewTradingClient(cfg.Alpaca.APIKey, cfg.Alpaca.Secret, cfg.Alpaca.TradingURL, marketClient)
 	})
 
@@ -96,10 +102,12 @@ func provide() (do.Injector, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		repo, err := do.Invoke[*marketrepo.Repository](i)
 		if err != nil {
 			return nil, err
 		}
+
 		return marketservice.New(client, repo), nil
 	})
 
@@ -108,14 +116,17 @@ func provide() (do.Injector, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		market, err := do.Invoke[*marketservice.Service](i)
 		if err != nil {
 			return nil, err
 		}
+
 		trading, err := do.Invoke[*alpaca.TradingClient](i)
 		if err != nil {
 			return nil, err
 		}
+
 		return agent.New(repo, repo, market, trading), nil
 	})
 
