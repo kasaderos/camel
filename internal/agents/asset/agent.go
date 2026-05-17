@@ -47,8 +47,10 @@ func (a *Agent) FetchPrice(ctx context.Context) (float64, error) {
 }
 
 func (a *Agent) FetchTotalSum(ctx context.Context) (float64, error) {
-	var price float64
-	var err error
+	var (
+		price float64
+		err   error
+	)
 
 	if a.AssetQty > 0 {
 		price, err = a.FetchPrice(ctx)
@@ -154,7 +156,7 @@ func (a *Agent) WithdrawWithSell(
 	sum float64,
 ) (model.AssetAgent, error) {
 	if sum < a.Cash || a.NoPositions() {
-		return a.Withdraw(ctx, sum)
+		return a.Withdraw(ctx, a.Cash)
 	}
 
 	price, err := a.FetchPrice(ctx)
@@ -234,27 +236,27 @@ func (a *Agent) Deposit(
 }
 
 // UpdateState allows modifying the agent's state metadata
-func (a *Agent) UpdateState(ctx context.Context) error {
+func (a *Agent) UpdateState(ctx context.Context) (model.AssetAgent, error) {
 	state, err := a.getState(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to compute state: %w", err)
+		return a.AssetAgent, fmt.Errorf("failed to compute state: %w", err)
 	}
 
 	err = a.repo.UpdateState(ctx, a.ID, state)
 	if err != nil {
-		return fmt.Errorf("update state: %w", err)
+		return a.AssetAgent, fmt.Errorf("update state: %w", err)
 	}
 
 	a.State = state
 
-	return nil
+	return a.AssetAgent, nil
 }
 
 func (a *Agent) getState(ctx context.Context) (model.State, error) {
 	// Asset agent settings
 	const (
-		lookback = 5
-		window   = 20
+		lookback = 3
+		window   = 3
 	)
 
 	now := time.Now()

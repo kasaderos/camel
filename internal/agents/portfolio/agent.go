@@ -6,7 +6,6 @@ import (
 	"io"
 	"log/slog"
 	"math"
-	"sort"
 	"time"
 
 	"github.com/kasaderos/camel/internal/model"
@@ -38,46 +37,44 @@ func (a *Agent) Coordinate(ctx context.Context, fn func(context.Context, AssetAg
 	return nil
 }
 
-func (a *Agent) Rebalance(ctx context.Context) error {
-	const threshold = 0.02
-
-	// 1. Update state of all asset agents in portfolio
+func (a *Agent) UpdatePortfolio(ctx context.Context) (*model.Portfolio, error) {
 	err := a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
-		return agent.UpdateState(ctx)
-	})
-	if err != nil {
-		return fmt.Errorf("update asset agent states: %w", err)
-	}
+		_, err := agent.UpdateState(ctx)
 
-	// 2. Get target newWeights based on current states
-	newWeights, err := a.Portfolio(ctx, threshold)
-	if err != nil {
-		return fmt.Errorf("calculate portfolio weights: %w", err)
-	}
-
-	// 3. Calculate total portfolio value (all assets + cash)
-	var totalPortfolioValue float64
-
-	err = a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
-		sum, err := agent.FetchTotalSum(ctx)
-		if err != nil {
-			return fmt.Errorf("agent fetch total sum: %w", err)
-		}
-
-		totalPortfolioValue += sum
-
-		return nil
-	})
-	if err != nil {
 		return err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("update agent states: %w", err)
 	}
 
-	// 4. First pass: Sell/withdraw assets to generate free cash
+	newPortfolio, err := a.FetchPortfolio(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("fetch portfolio weights: %w", err)
+	}
+
+	return newPortfolio, nil
+}
+
+func (a *Agent) Rebalance(ctx context.Context) error {
+	portfolio, err := a.FetchPortfolio(ctx)
+	if err != nil {
+		return fmt.Errorf("fetch portfolio weights: %w", err)
+	}
+
+	// 1. Update portfolio
+	newPortfolio, err := a.UpdatePortfolio(ctx)
+	if err != nil {
+		return fmt.Errorf("update portfolio: %w", err)
+	}
+
+	// 2. First pass: Sell/withdraw assets to generate free cash
 	freeCash := 0.0
 
 	err = a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
 		agentInfo := agent.FetchInfo(ctx)
-		newWeight, exist := newWeights[agentInfo.AssetID]
+
+		asset, _ := portfolio.Asset(agentInfo.AssetID)
+		newAsset, exist := newPortfolio.Asset(agentInfo.AssetID)
 
 		// Close positions for assets not in target weights
 		if !exist {
@@ -91,14 +88,7 @@ func (a *Agent) Rebalance(ctx context.Context) error {
 			return nil
 		}
 
-		// Sell excess if agent has more than target
-		agentTotalSum, err := agent.FetchTotalSum(ctx)
-		if err != nil {
-			return fmt.Errorf("agent fetch total sum: %w", err)
-		}
-
-		targetSum := roundMoney(totalPortfolioValue * newWeight)
-		excessSum := roundMoney(agentTotalSum - targetSum)
+		excessSum := roundMoney(asset.Sum() - newAsset.Sum())
 
 		// Withdraw excess or clean up small positions
 		if excessSum > 0 {
@@ -107,14 +97,15 @@ func (a *Agent) Rebalance(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("agent withdraw with sell: %w", err)
 			}
+
 			freeCash += agentInfo.Cash
-		} else if agentInfo.AssetQty < 1e-3 && agentTotalSum > 0 {
-			// Clean up: agent has negligible quantity but some cash/value
-			// Withdraw all remaining value
-			agentInfo, err := agent.WithdrawWithSell(ctx, agentTotalSum)
+		} else if agentInfo.NoPositions() && agentInfo.HasCash() {
+			// Withdraw all remaining
+			agentInfo, err := agent.Withdraw(ctx, agentInfo.Cash)
 			if err != nil {
 				return fmt.Errorf("agent withdraw with sell: %w", err)
 			}
+
 			freeCash += agentInfo.Cash
 		}
 
@@ -124,24 +115,19 @@ func (a *Agent) Rebalance(ctx context.Context) error {
 		return err
 	}
 
-	// 5. Second pass: Buy/deposit assets using available free cash
+	// 3. Second pass: Buy/deposit assets using available free cash
 	err = a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
 		agentInfo := agent.FetchInfo(ctx)
-		newWeight, exist := newWeights[agentInfo.AssetID]
+
+		asset, _ := portfolio.Asset(agentInfo.AssetID)
+		targetAsset, exist := newPortfolio.Asset(agentInfo.AssetID)
 
 		// Skip assets not in target weights
 		if !exist {
 			return nil
 		}
 
-		// Buy more if agent has less than target and we have cash
-		agentTotalSum, err := agent.FetchTotalSum(ctx)
-		if err != nil {
-			return fmt.Errorf("agent fetch total sum: %w", err)
-		}
-
-		targetSum := roundMoney(totalPortfolioValue * newWeight)
-		deficitSum := roundMoney(targetSum - agentTotalSum)
+		deficitSum := roundMoney(targetAsset.Sum() - asset.Sum())
 
 		if deficitSum > 0 && freeCash >= deficitSum {
 			_, err := agent.DepositWithBuy(ctx, deficitSum)
@@ -158,9 +144,13 @@ func (a *Agent) Rebalance(ctx context.Context) error {
 	return nil
 }
 
-func (a *Agent) Portfolio(ctx context.Context, threshold float64) (map[string]float64, error) {
+func (a *Agent) FetchPortfolio(ctx context.Context) (*model.Portfolio, error) {
+	const threshold = 0.01
+
 	type candidate struct {
 		assetID string
+		price   float64
+		qty     float64
 		score   float64
 	}
 
@@ -183,9 +173,16 @@ func (a *Agent) Portfolio(ctx context.Context, threshold float64) (map[string]fl
 			return nil
 		}
 
+		price, err := agent.FetchPrice(ctx)
+		if err != nil {
+			return fmt.Errorf("fetch price: %w", err)
+		}
+
 		candidates = append(candidates, candidate{
 			assetID: agentInfo.AssetID,
 			score:   score,
+			price:   price,
+			qty:     agentInfo.AssetQty,
 		})
 
 		totalScore += score
@@ -196,17 +193,22 @@ func (a *Agent) Portfolio(ctx context.Context, threshold float64) (map[string]fl
 		return nil, err
 	}
 
-	weights := make(map[string]float64)
+	assets := make(map[string]model.PortfolioAsset)
 
 	if totalScore == 0 {
-		return weights, nil
+		return &model.Portfolio{Assets: assets}, nil
 	}
 
 	for _, c := range candidates {
-		weights[c.assetID] = c.score / totalScore
+		assets[c.assetID] = model.PortfolioAsset{
+			AssetID: c.assetID,
+			Price:   c.price,
+			Qty:     c.qty,
+			Weight:  c.score / totalScore,
+		}
 	}
 
-	return weights, nil
+	return &model.Portfolio{Assets: assets}, nil
 }
 
 func (a *Agent) PrintInfo(ctx context.Context, w io.Writer) {
@@ -217,72 +219,14 @@ func (a *Agent) PrintInfo(ctx context.Context, w io.Writer) {
 		a.UpdatedAt.Format(time.RFC3339),
 	)
 	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "asset agents:")
 
-	for _, agent := range a.assetAgents {
-		info := agent.FetchInfo(ctx)
-		fmt.Fprintf(w, "- id=%s asset_id=%s asset_qty=%.4f cash=%.2f state=%v\n",
-			info.ID,
-			info.AssetID,
-			info.AssetQty,
-			info.Cash,
-			info.State,
-		)
-	}
-
-	type summary struct {
-		AssetID string
-		Count   int
-		Qty     float64
-		Cash    float64
-	}
-
-	byAsset := map[string]*summary{}
-
-	for _, agent := range a.assetAgents {
-		info := agent.FetchInfo(ctx)
-
-		s := byAsset[info.AssetID]
-		if s == nil {
-			s = &summary{AssetID: info.AssetID}
-			byAsset[info.AssetID] = s
-		}
-
-		s.Count++
-		s.Qty += info.AssetQty
-		s.Cash += info.Cash
-	}
-
-	keys := make([]string, 0, len(byAsset))
-	for k := range byAsset {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
-
-	fmt.Fprintln(w, "")
-
-	weights, err := a.Portfolio(ctx, 0.02)
+	portfolio, err := a.FetchPortfolio(ctx)
 	if err != nil {
 		fmt.Fprintf(w, "error calculating portfolio weights: %v\n", err)
 		return
 	}
 
-	if len(weights) > 0 {
-		wKeys := make([]string, 0, len(weights))
-		for k := range weights {
-			wKeys = append(wKeys, k)
-		}
-
-		sort.Strings(wKeys)
-
-		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "portfolio weights:")
-
-		for _, k := range wKeys {
-			fmt.Fprintf(w, "- asset_id=%s weight=%.4f\n", k, weights[k])
-		}
-	}
+	portfolio.Print(w)
 }
 
 // roundMoney rounds a float64 to 2 decimal places (cents)

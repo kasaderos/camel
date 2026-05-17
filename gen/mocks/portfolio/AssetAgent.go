@@ -445,21 +445,31 @@ func (_c *AssetAgent_SellAsset_Call) RunAndReturn(run func(context.Context, floa
 }
 
 // UpdateState provides a mock function with given fields: _a0
-func (_m *AssetAgent) UpdateState(_a0 context.Context) error {
+func (_m *AssetAgent) UpdateState(_a0 context.Context) (model.AssetAgent, error) {
 	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateState")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+	var r0 model.AssetAgent
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (model.AssetAgent, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) model.AssetAgent); ok {
 		r0 = rf(_a0)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(model.AssetAgent)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // AssetAgent_UpdateState_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateState'
@@ -480,12 +490,12 @@ func (_c *AssetAgent_UpdateState_Call) Run(run func(_a0 context.Context)) *Asset
 	return _c
 }
 
-func (_c *AssetAgent_UpdateState_Call) Return(_a0 error) *AssetAgent_UpdateState_Call {
-	_c.Call.Return(_a0)
+func (_c *AssetAgent_UpdateState_Call) Return(_a0 model.AssetAgent, _a1 error) *AssetAgent_UpdateState_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *AssetAgent_UpdateState_Call) RunAndReturn(run func(context.Context) error) *AssetAgent_UpdateState_Call {
+func (_c *AssetAgent_UpdateState_Call) RunAndReturn(run func(context.Context) (model.AssetAgent, error)) *AssetAgent_UpdateState_Call {
 	_c.Call.Return(run)
 	return _c
 }

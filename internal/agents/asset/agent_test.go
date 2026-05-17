@@ -238,7 +238,7 @@ func (s *AssetAgentTestSuite) TestUpdateState() {
 		Return(nil).
 		Once()
 
-	err := s.agent.UpdateState(s.ctx)
+	_, err := s.agent.UpdateState(s.ctx)
 	s.NoError(err)
 
 	// Verify state was updated
@@ -253,7 +253,7 @@ func (s *AssetAgentTestSuite) TestUpdateState_FetchBarsError() {
 		Return(nil, errors.New("market data unavailable")).
 		Once()
 
-	err := s.agent.UpdateState(s.ctx)
+	_, err := s.agent.UpdateState(s.ctx)
 	s.Error(err)
 	s.Contains(err.Error(), "failed to compute state")
 }

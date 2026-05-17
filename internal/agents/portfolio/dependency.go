@@ -13,7 +13,7 @@ type AgentRepository interface {
 
 type AssetAgent interface {
 	FetchInfo(context.Context) model.AssetAgent
-	UpdateState(context.Context) error
+	UpdateState(context.Context) (model.AssetAgent, error)
 	BuyAsset(ctx context.Context, sum float64) error
 	SellAsset(ctx context.Context, qty float64) error
 	Withdraw(ctx context.Context, sum float64) (model.AssetAgent, error)

@@ -20,6 +20,10 @@ type AssetAgent struct {
 	PortfolioAgentID *string
 }
 
+func (a AssetAgent) HasCash() bool {
+	return a.Cash > 0
+}
+
 type PortfolioAgent struct {
 	ID          string
 	PortfolioID string

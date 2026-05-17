@@ -11,6 +11,9 @@ proto:
 	buf lint
 	buf generate
 
+lint:
+	golangci-lint run --fix --config .golangci.yml
+
 portfolio:
 	docker compose run --rm portfolio-manager create --csv /app/portfolios/portfolio-1.csv
 
