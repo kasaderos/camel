@@ -11,11 +11,11 @@ const (
 )
 
 type Order struct {
-	PortfolioID string
-
+	ID      string
 	AssetID string
 	Price   float64
 	Qty     float64
+	Side    string
 
 	Status    string
 	CreatedAt time.Time

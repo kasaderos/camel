@@ -5,7 +5,8 @@ package mocks
 import (
 	context "context"
 
-	model "github.com/kasaderos/camel/internal/model"
+	alpaca "github.com/kasaderos/camel/pkg/alpaca"
+
 	mock "github.com/stretchr/testify/mock"
 
 	time "time"
@@ -25,23 +26,23 @@ func (_m *MarketService) EXPECT() *MarketService_Expecter {
 }
 
 // FetchBars provides a mock function with given fields: ctx, symbol, start, end
-func (_m *MarketService) FetchBars(ctx context.Context, symbol string, start time.Time, end time.Time) ([]model.Bar, error) {
+func (_m *MarketService) FetchBars(ctx context.Context, symbol string, start time.Time, end time.Time) ([]alpaca.Bar, error) {
 	ret := _m.Called(ctx, symbol, start, end)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FetchBars")
 	}
 
-	var r0 []model.Bar
+	var r0 []alpaca.Bar
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, time.Time) ([]model.Bar, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, time.Time) ([]alpaca.Bar, error)); ok {
 		return rf(ctx, symbol, start, end)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, time.Time) []model.Bar); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, time.Time) []alpaca.Bar); ok {
 		r0 = rf(ctx, symbol, start, end)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.Bar)
+			r0 = ret.Get(0).([]alpaca.Bar)
 		}
 	}
 
@@ -75,12 +76,12 @@ func (_c *MarketService_FetchBars_Call) Run(run func(ctx context.Context, symbol
 	return _c
 }
 
-func (_c *MarketService_FetchBars_Call) Return(_a0 []model.Bar, _a1 error) *MarketService_FetchBars_Call {
+func (_c *MarketService_FetchBars_Call) Return(_a0 []alpaca.Bar, _a1 error) *MarketService_FetchBars_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MarketService_FetchBars_Call) RunAndReturn(run func(context.Context, string, time.Time, time.Time) ([]model.Bar, error)) *MarketService_FetchBars_Call {
+func (_c *MarketService_FetchBars_Call) RunAndReturn(run func(context.Context, string, time.Time, time.Time) ([]alpaca.Bar, error)) *MarketService_FetchBars_Call {
 	_c.Call.Return(run)
 	return _c
 }

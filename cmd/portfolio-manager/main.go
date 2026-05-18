@@ -19,11 +19,16 @@ func main() {
 				Usage: "Create a portfolio from a CSV file",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:     "csv",
-						Usage:    "CSV file containing asset IDs (one per line or in the first column)",
+						Name:     "id",
+						Usage:    "portfolio id",
 						Required: true,
 					},
 					&cli.StringFlag{
+						Name:     "csv",
+						Usage:    "CSV file containing asset IDs",
+						Required: true,
+					},
+					&cli.Float64Flag{
 						Name:     "cash",
 						Usage:    "initial balance",
 						Required: true,

@@ -10,9 +10,6 @@ packages:
   github.com/kasaderos/camel/internal/agents/portfolio:
     interfaces:
       AgentRepository:
-      AssetAgent:
-  github.com/kasaderos/camel/internal/agents/asset:
-    interfaces:
-      AgentRepository:
-      MarketService:
       Exchanger:
+      MarketService:
+

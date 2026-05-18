@@ -6,11 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/kasaderos/camel/internal/model"
-	agentservice "github.com/kasaderos/camel/internal/service/agent"
+	"github.com/kasaderos/camel/internal/service/portfolio"
 	"github.com/samber/do/v2"
 	"github.com/urfave/cli/v3"
 )
@@ -22,19 +23,40 @@ func createPortfolio(ctx context.Context, c *cli.Command) error {
 	}
 	defer terminate(injector)
 
-	service := do.MustInvoke[*agentservice.Service](injector)
+	service := do.MustInvoke[*portfolio.Service](injector)
 
-	assets, err := readAssetsCSV(c.String("csv"))
+	csvName := c.String("csv")
+	portfolioID := c.String("id")
+	cash := c.Float64("cash")
+
+	assets, err := readAssetsCSV(csvName)
 	if err != nil {
 		return err
 	}
 
-	agent, err := service.CreatePortfolioAgent(ctx, assets, c.Float64("cash"))
+	slog.Info("create portfolio", "portfolioID", portfolioID, "cash", cash, "csv", csvName)
+
+	err = service.CreatePortfolio(
+		ctx,
+		portfolioID,
+		assets,
+		cash,
+	)
 	if err != nil {
 		return err
 	}
 
-	agent.PrintInfo(ctx, c.Writer)
+	portfolio, err := service.FetchPortfolio(ctx, portfolioID)
+	if err != nil {
+		return fmt.Errorf("fetch portfolio: %w", err)
+	}
+
+	err = service.Rebalance(ctx, portfolio)
+	if err != nil {
+		return fmt.Errorf("rebalance: %w", err)
+	}
+
+	portfolio.Print(c.Writer)
 
 	return nil
 }
@@ -46,14 +68,14 @@ func portfolioInfo(ctx context.Context, c *cli.Command) error {
 	}
 	defer terminate(injector)
 
-	mgr := do.MustInvoke[*agentservice.Service](injector)
+	service := do.MustInvoke[*portfolio.Service](injector)
 
-	agent, err := mgr.InitPortfolioAgent(ctx, c.String("id"))
+	portfolio, err := service.FetchPortfolio(ctx, c.String("id"))
 	if err != nil {
 		return err
 	}
 
-	agent.PrintInfo(ctx, c.Writer)
+	portfolio.Print(c.Writer)
 
 	return nil
 }
@@ -65,18 +87,20 @@ func rebalance(ctx context.Context, c *cli.Command) error {
 	}
 	defer terminate(injector)
 
-	mgr := do.MustInvoke[*agentservice.Service](injector)
+	service := do.MustInvoke[*portfolio.Service](injector)
 
-	agent, err := mgr.InitPortfolioAgent(ctx, c.String("id"))
+	portfolio, err := service.FetchPortfolio(ctx, c.String("id"))
+	if err != nil {
+		return fmt.Errorf("fetch portfolio: %w", err)
+	}
+
+	err = service.Rebalance(
+		ctx,
+		portfolio,
+	)
 	if err != nil {
 		return err
 	}
-
-	if err := agent.Rebalance(ctx); err != nil {
-		return err
-	}
-
-	agent.PrintInfo(ctx, c.Writer)
 
 	fmt.Fprintln(c.Writer, "rebalance OK")
 

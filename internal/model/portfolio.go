@@ -8,40 +8,14 @@ import (
 )
 
 type Portfolio struct {
-	Assets map[string]PortfolioAsset
+	ID      string
+	Weights map[string]float64
+	Cash    float64
 }
 
 type PortfolioAsset struct {
 	AssetID string
-	Price   float64
-	Qty     float64
 	Weight  float64
-}
-
-func (pa PortfolioAsset) Sum() float64 {
-	return pa.Price * pa.Qty
-}
-
-func (p Portfolio) Asset(assetID string) (PortfolioAsset, bool) {
-	asset, exist := p.Assets[assetID]
-
-	return asset, exist
-}
-
-func (p Portfolio) AssetSum(assetID string) (float64, bool) {
-	asset, exist := p.Assets[assetID]
-
-	return asset.Sum(), exist
-}
-
-func (p Portfolio) TotalSum() float64 {
-	totalSum := 0.0
-
-	for _, asset := range p.Assets {
-		totalSum += asset.Price + asset.Qty
-	}
-
-	return totalSum
 }
 
 // Print writes a formatted table of the portfolio to the provided io.Writer
@@ -50,30 +24,25 @@ func (p Portfolio) Print(w io.Writer) {
 	tw := tabwriter.NewWriter(w, 0, 0, 3, ' ', 0)
 
 	// Print Header
-	fmt.Fprintln(tw, "ASSET ID\tPRICE\tQTY\tWEIGHT\tTOTAL")
-	fmt.Fprintln(tw, "--------\t-----\t---\t------\t-----")
+	fmt.Fprintln(tw, "ASSET ID\tWEIGHT")
+	fmt.Fprintln(tw, "--------\t-------")
 
-	// Sort keys for consistent output ordering
-	keys := make([]string, 0, len(p.Assets))
-	for k := range p.Assets {
-		keys = append(keys, k)
+	// Sort assetIDs for consistent output ordering
+	assetIDs := make([]string, 0, len(p.Weights))
+	for k := range p.Weights {
+		assetIDs = append(assetIDs, k)
 	}
-	sort.Strings(keys)
+	sort.Strings(assetIDs)
 
-	for _, k := range keys {
-		asset := p.Assets[k]
-		fmt.Fprintf(tw, "%s\t%.2f\t%.2f\t%.2f%%\t%.2f\n",
-			asset.AssetID,
-			asset.Price,
-			asset.Qty,
-			asset.Weight, // Assuming Weight
-			asset.Sum(),
+	for _, assetID := range assetIDs {
+		weight := p.Weights[assetID]
+		fmt.Fprintf(tw, "%s\t%.2f\n",
+			assetID,
+			weight, // Assuming Weight
 		)
 	}
 
-	// Calculate and print the footer
-	fmt.Fprintln(tw, "--------\t-----\t---\t------\t-----")
-	fmt.Fprintf(tw, "TOTAL\t\t\t\t%.2f\n", p.TotalSum())
+	fmt.Fprintln(tw, "--------\t-------")
 
 	tw.Flush()
 }

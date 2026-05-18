@@ -2,25 +2,31 @@ package portfolio
 
 import (
 	"context"
+	"time"
 
 	"github.com/kasaderos/camel/internal/model"
+	"github.com/kasaderos/camel/pkg/alpaca"
 )
 
 type AgentRepository interface {
-	Fetch(ctx context.Context, id string) (model.PortfolioAgent, error)
-	Create(ctx context.Context, assets []model.AssetAgent) (model.PortfolioAgent, error)
+	UpdatePortfolioAgent(ctx context.Context, a model.PortfolioAgent) error
 }
 
-type AssetAgent interface {
-	FetchInfo(context.Context) model.AssetAgent
-	UpdateState(context.Context) (model.AssetAgent, error)
-	BuyAsset(ctx context.Context, sum float64) error
-	SellAsset(ctx context.Context, qty float64) error
-	Withdraw(ctx context.Context, sum float64) (model.AssetAgent, error)
-	WithdrawWithSell(ctx context.Context, sum float64) (model.AssetAgent, error)
-	Deposit(ctx context.Context, amount float64) (model.AssetAgent, error)
-	DepositWithBuy(ctx context.Context, sum float64) (model.AssetAgent, error)
-	FetchPrice(ctx context.Context) (float64, error)
-	FetchTotalSum(ctx context.Context) (float64, error)
-	ClosePosition(ctx context.Context) (model.AssetAgent, error)
+type MarketService interface {
+	FetchBars(
+		ctx context.Context,
+		symbol string,
+		start time.Time,
+		end time.Time,
+	) ([]alpaca.Bar, error)
+}
+
+type Exchanger interface {
+	CreateMarketOrder(
+		ctx context.Context,
+		symbol string,
+		qty float64,
+		side string, // "buy" or "sell"
+	) (*model.Order, error)
+	FetchPrice(ctx context.Context, assetID string) (float64, error)
 }

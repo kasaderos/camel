@@ -22,116 +22,49 @@ func (_m *AgentRepository) EXPECT() *AgentRepository_Expecter {
 	return &AgentRepository_Expecter{mock: &_m.Mock}
 }
 
-// Create provides a mock function with given fields: ctx, assets
-func (_m *AgentRepository) Create(ctx context.Context, assets []model.AssetAgent) (model.PortfolioAgent, error) {
-	ret := _m.Called(ctx, assets)
+// UpdatePortfolioAgent provides a mock function with given fields: ctx, a
+func (_m *AgentRepository) UpdatePortfolioAgent(ctx context.Context, a model.PortfolioAgent) error {
+	ret := _m.Called(ctx, a)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Create")
+		panic("no return value specified for UpdatePortfolioAgent")
 	}
 
-	var r0 model.PortfolioAgent
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []model.AssetAgent) (model.PortfolioAgent, error)); ok {
-		return rf(ctx, assets)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, []model.AssetAgent) model.PortfolioAgent); ok {
-		r0 = rf(ctx, assets)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.PortfolioAgent) error); ok {
+		r0 = rf(ctx, a)
 	} else {
-		r0 = ret.Get(0).(model.PortfolioAgent)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []model.AssetAgent) error); ok {
-		r1 = rf(ctx, assets)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
-// AgentRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
-type AgentRepository_Create_Call struct {
+// AgentRepository_UpdatePortfolioAgent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdatePortfolioAgent'
+type AgentRepository_UpdatePortfolioAgent_Call struct {
 	*mock.Call
 }
 
-// Create is a helper method to define mock.On call
+// UpdatePortfolioAgent is a helper method to define mock.On call
 //   - ctx context.Context
-//   - assets []model.AssetAgent
-func (_e *AgentRepository_Expecter) Create(ctx interface{}, assets interface{}) *AgentRepository_Create_Call {
-	return &AgentRepository_Create_Call{Call: _e.mock.On("Create", ctx, assets)}
+//   - a model.PortfolioAgent
+func (_e *AgentRepository_Expecter) UpdatePortfolioAgent(ctx interface{}, a interface{}) *AgentRepository_UpdatePortfolioAgent_Call {
+	return &AgentRepository_UpdatePortfolioAgent_Call{Call: _e.mock.On("UpdatePortfolioAgent", ctx, a)}
 }
 
-func (_c *AgentRepository_Create_Call) Run(run func(ctx context.Context, assets []model.AssetAgent)) *AgentRepository_Create_Call {
+func (_c *AgentRepository_UpdatePortfolioAgent_Call) Run(run func(ctx context.Context, a model.PortfolioAgent)) *AgentRepository_UpdatePortfolioAgent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]model.AssetAgent))
+		run(args[0].(context.Context), args[1].(model.PortfolioAgent))
 	})
 	return _c
 }
 
-func (_c *AgentRepository_Create_Call) Return(_a0 model.PortfolioAgent, _a1 error) *AgentRepository_Create_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *AgentRepository_UpdatePortfolioAgent_Call) Return(_a0 error) *AgentRepository_UpdatePortfolioAgent_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *AgentRepository_Create_Call) RunAndReturn(run func(context.Context, []model.AssetAgent) (model.PortfolioAgent, error)) *AgentRepository_Create_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Fetch provides a mock function with given fields: ctx, id
-func (_m *AgentRepository) Fetch(ctx context.Context, id string) (model.PortfolioAgent, error) {
-	ret := _m.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Fetch")
-	}
-
-	var r0 model.PortfolioAgent
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (model.PortfolioAgent, error)); ok {
-		return rf(ctx, id)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) model.PortfolioAgent); ok {
-		r0 = rf(ctx, id)
-	} else {
-		r0 = ret.Get(0).(model.PortfolioAgent)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// AgentRepository_Fetch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Fetch'
-type AgentRepository_Fetch_Call struct {
-	*mock.Call
-}
-
-// Fetch is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-func (_e *AgentRepository_Expecter) Fetch(ctx interface{}, id interface{}) *AgentRepository_Fetch_Call {
-	return &AgentRepository_Fetch_Call{Call: _e.mock.On("Fetch", ctx, id)}
-}
-
-func (_c *AgentRepository_Fetch_Call) Run(run func(ctx context.Context, id string)) *AgentRepository_Fetch_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *AgentRepository_Fetch_Call) Return(_a0 model.PortfolioAgent, _a1 error) *AgentRepository_Fetch_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *AgentRepository_Fetch_Call) RunAndReturn(run func(context.Context, string) (model.PortfolioAgent, error)) *AgentRepository_Fetch_Call {
+func (_c *AgentRepository_UpdatePortfolioAgent_Call) RunAndReturn(run func(context.Context, model.PortfolioAgent) error) *AgentRepository_UpdatePortfolioAgent_Call {
 	_c.Call.Return(run)
 	return _c
 }

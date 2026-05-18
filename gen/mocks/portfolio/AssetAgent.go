@@ -70,22 +70,22 @@ func (_c *AssetAgent_BuyAsset_Call) RunAndReturn(run func(context.Context, float
 }
 
 // ClosePosition provides a mock function with given fields: ctx
-func (_m *AssetAgent) ClosePosition(ctx context.Context) (model.AssetAgent, error) {
+func (_m *AssetAgent) ClosePosition(ctx context.Context) (model.PortfolioAgent, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ClosePosition")
 	}
 
-	var r0 model.AssetAgent
+	var r0 model.PortfolioAgent
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (model.AssetAgent, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (model.PortfolioAgent, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) model.AssetAgent); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) model.PortfolioAgent); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(model.AssetAgent)
+		r0 = ret.Get(0).(model.PortfolioAgent)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -115,33 +115,33 @@ func (_c *AssetAgent_ClosePosition_Call) Run(run func(ctx context.Context)) *Ass
 	return _c
 }
 
-func (_c *AssetAgent_ClosePosition_Call) Return(_a0 model.AssetAgent, _a1 error) *AssetAgent_ClosePosition_Call {
+func (_c *AssetAgent_ClosePosition_Call) Return(_a0 model.PortfolioAgent, _a1 error) *AssetAgent_ClosePosition_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *AssetAgent_ClosePosition_Call) RunAndReturn(run func(context.Context) (model.AssetAgent, error)) *AssetAgent_ClosePosition_Call {
+func (_c *AssetAgent_ClosePosition_Call) RunAndReturn(run func(context.Context) (model.PortfolioAgent, error)) *AssetAgent_ClosePosition_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Deposit provides a mock function with given fields: ctx, amount
-func (_m *AssetAgent) Deposit(ctx context.Context, amount float64) (model.AssetAgent, error) {
+func (_m *AssetAgent) Deposit(ctx context.Context, amount float64) (model.PortfolioAgent, error) {
 	ret := _m.Called(ctx, amount)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Deposit")
 	}
 
-	var r0 model.AssetAgent
+	var r0 model.PortfolioAgent
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, float64) (model.AssetAgent, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, float64) (model.PortfolioAgent, error)); ok {
 		return rf(ctx, amount)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, float64) model.AssetAgent); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, float64) model.PortfolioAgent); ok {
 		r0 = rf(ctx, amount)
 	} else {
-		r0 = ret.Get(0).(model.AssetAgent)
+		r0 = ret.Get(0).(model.PortfolioAgent)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, float64) error); ok {
@@ -172,33 +172,33 @@ func (_c *AssetAgent_Deposit_Call) Run(run func(ctx context.Context, amount floa
 	return _c
 }
 
-func (_c *AssetAgent_Deposit_Call) Return(_a0 model.AssetAgent, _a1 error) *AssetAgent_Deposit_Call {
+func (_c *AssetAgent_Deposit_Call) Return(_a0 model.PortfolioAgent, _a1 error) *AssetAgent_Deposit_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *AssetAgent_Deposit_Call) RunAndReturn(run func(context.Context, float64) (model.AssetAgent, error)) *AssetAgent_Deposit_Call {
+func (_c *AssetAgent_Deposit_Call) RunAndReturn(run func(context.Context, float64) (model.PortfolioAgent, error)) *AssetAgent_Deposit_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DepositWithBuy provides a mock function with given fields: ctx, sum
-func (_m *AssetAgent) DepositWithBuy(ctx context.Context, sum float64) (model.AssetAgent, error) {
+func (_m *AssetAgent) DepositWithBuy(ctx context.Context, sum float64) (model.PortfolioAgent, error) {
 	ret := _m.Called(ctx, sum)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DepositWithBuy")
 	}
 
-	var r0 model.AssetAgent
+	var r0 model.PortfolioAgent
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, float64) (model.AssetAgent, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, float64) (model.PortfolioAgent, error)); ok {
 		return rf(ctx, sum)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, float64) model.AssetAgent); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, float64) model.PortfolioAgent); ok {
 		r0 = rf(ctx, sum)
 	} else {
-		r0 = ret.Get(0).(model.AssetAgent)
+		r0 = ret.Get(0).(model.PortfolioAgent)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, float64) error); ok {
@@ -229,29 +229,29 @@ func (_c *AssetAgent_DepositWithBuy_Call) Run(run func(ctx context.Context, sum 
 	return _c
 }
 
-func (_c *AssetAgent_DepositWithBuy_Call) Return(_a0 model.AssetAgent, _a1 error) *AssetAgent_DepositWithBuy_Call {
+func (_c *AssetAgent_DepositWithBuy_Call) Return(_a0 model.PortfolioAgent, _a1 error) *AssetAgent_DepositWithBuy_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *AssetAgent_DepositWithBuy_Call) RunAndReturn(run func(context.Context, float64) (model.AssetAgent, error)) *AssetAgent_DepositWithBuy_Call {
+func (_c *AssetAgent_DepositWithBuy_Call) RunAndReturn(run func(context.Context, float64) (model.PortfolioAgent, error)) *AssetAgent_DepositWithBuy_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FetchInfo provides a mock function with given fields: _a0
-func (_m *AssetAgent) FetchInfo(_a0 context.Context) model.AssetAgent {
+func (_m *AssetAgent) FetchInfo(_a0 context.Context) model.PortfolioAgent {
 	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FetchInfo")
 	}
 
-	var r0 model.AssetAgent
-	if rf, ok := ret.Get(0).(func(context.Context) model.AssetAgent); ok {
+	var r0 model.PortfolioAgent
+	if rf, ok := ret.Get(0).(func(context.Context) model.PortfolioAgent); ok {
 		r0 = rf(_a0)
 	} else {
-		r0 = ret.Get(0).(model.AssetAgent)
+		r0 = ret.Get(0).(model.PortfolioAgent)
 	}
 
 	return r0
@@ -275,12 +275,12 @@ func (_c *AssetAgent_FetchInfo_Call) Run(run func(_a0 context.Context)) *AssetAg
 	return _c
 }
 
-func (_c *AssetAgent_FetchInfo_Call) Return(_a0 model.AssetAgent) *AssetAgent_FetchInfo_Call {
+func (_c *AssetAgent_FetchInfo_Call) Return(_a0 model.PortfolioAgent) *AssetAgent_FetchInfo_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *AssetAgent_FetchInfo_Call) RunAndReturn(run func(context.Context) model.AssetAgent) *AssetAgent_FetchInfo_Call {
+func (_c *AssetAgent_FetchInfo_Call) RunAndReturn(run func(context.Context) model.PortfolioAgent) *AssetAgent_FetchInfo_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -445,22 +445,22 @@ func (_c *AssetAgent_SellAsset_Call) RunAndReturn(run func(context.Context, floa
 }
 
 // UpdateState provides a mock function with given fields: _a0
-func (_m *AssetAgent) UpdateState(_a0 context.Context) (model.AssetAgent, error) {
+func (_m *AssetAgent) UpdateState(_a0 context.Context) (model.PortfolioAgent, error) {
 	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateState")
 	}
 
-	var r0 model.AssetAgent
+	var r0 model.PortfolioAgent
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (model.AssetAgent, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (model.PortfolioAgent, error)); ok {
 		return rf(_a0)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) model.AssetAgent); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) model.PortfolioAgent); ok {
 		r0 = rf(_a0)
 	} else {
-		r0 = ret.Get(0).(model.AssetAgent)
+		r0 = ret.Get(0).(model.PortfolioAgent)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -490,33 +490,33 @@ func (_c *AssetAgent_UpdateState_Call) Run(run func(_a0 context.Context)) *Asset
 	return _c
 }
 
-func (_c *AssetAgent_UpdateState_Call) Return(_a0 model.AssetAgent, _a1 error) *AssetAgent_UpdateState_Call {
+func (_c *AssetAgent_UpdateState_Call) Return(_a0 model.PortfolioAgent, _a1 error) *AssetAgent_UpdateState_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *AssetAgent_UpdateState_Call) RunAndReturn(run func(context.Context) (model.AssetAgent, error)) *AssetAgent_UpdateState_Call {
+func (_c *AssetAgent_UpdateState_Call) RunAndReturn(run func(context.Context) (model.PortfolioAgent, error)) *AssetAgent_UpdateState_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Withdraw provides a mock function with given fields: ctx, sum
-func (_m *AssetAgent) Withdraw(ctx context.Context, sum float64) (model.AssetAgent, error) {
+func (_m *AssetAgent) Withdraw(ctx context.Context, sum float64) (model.PortfolioAgent, error) {
 	ret := _m.Called(ctx, sum)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Withdraw")
 	}
 
-	var r0 model.AssetAgent
+	var r0 model.PortfolioAgent
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, float64) (model.AssetAgent, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, float64) (model.PortfolioAgent, error)); ok {
 		return rf(ctx, sum)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, float64) model.AssetAgent); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, float64) model.PortfolioAgent); ok {
 		r0 = rf(ctx, sum)
 	} else {
-		r0 = ret.Get(0).(model.AssetAgent)
+		r0 = ret.Get(0).(model.PortfolioAgent)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, float64) error); ok {
@@ -547,33 +547,33 @@ func (_c *AssetAgent_Withdraw_Call) Run(run func(ctx context.Context, sum float6
 	return _c
 }
 
-func (_c *AssetAgent_Withdraw_Call) Return(_a0 model.AssetAgent, _a1 error) *AssetAgent_Withdraw_Call {
+func (_c *AssetAgent_Withdraw_Call) Return(_a0 model.PortfolioAgent, _a1 error) *AssetAgent_Withdraw_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *AssetAgent_Withdraw_Call) RunAndReturn(run func(context.Context, float64) (model.AssetAgent, error)) *AssetAgent_Withdraw_Call {
+func (_c *AssetAgent_Withdraw_Call) RunAndReturn(run func(context.Context, float64) (model.PortfolioAgent, error)) *AssetAgent_Withdraw_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // WithdrawWithSell provides a mock function with given fields: ctx, sum
-func (_m *AssetAgent) WithdrawWithSell(ctx context.Context, sum float64) (model.AssetAgent, error) {
+func (_m *AssetAgent) WithdrawWithSell(ctx context.Context, sum float64) (model.PortfolioAgent, error) {
 	ret := _m.Called(ctx, sum)
 
 	if len(ret) == 0 {
 		panic("no return value specified for WithdrawWithSell")
 	}
 
-	var r0 model.AssetAgent
+	var r0 model.PortfolioAgent
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, float64) (model.AssetAgent, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, float64) (model.PortfolioAgent, error)); ok {
 		return rf(ctx, sum)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, float64) model.AssetAgent); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, float64) model.PortfolioAgent); ok {
 		r0 = rf(ctx, sum)
 	} else {
-		r0 = ret.Get(0).(model.AssetAgent)
+		r0 = ret.Get(0).(model.PortfolioAgent)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, float64) error); ok {
@@ -604,12 +604,12 @@ func (_c *AssetAgent_WithdrawWithSell_Call) Run(run func(ctx context.Context, su
 	return _c
 }
 
-func (_c *AssetAgent_WithdrawWithSell_Call) Return(_a0 model.AssetAgent, _a1 error) *AssetAgent_WithdrawWithSell_Call {
+func (_c *AssetAgent_WithdrawWithSell_Call) Return(_a0 model.PortfolioAgent, _a1 error) *AssetAgent_WithdrawWithSell_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *AssetAgent_WithdrawWithSell_Call) RunAndReturn(run func(context.Context, float64) (model.AssetAgent, error)) *AssetAgent_WithdrawWithSell_Call {
+func (_c *AssetAgent_WithdrawWithSell_Call) RunAndReturn(run func(context.Context, float64) (model.PortfolioAgent, error)) *AssetAgent_WithdrawWithSell_Call {
 	_c.Call.Return(run)
 	return _c
 }

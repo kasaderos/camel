@@ -8,12 +8,13 @@ import (
 
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
-	agents "github.com/kasaderos/camel/internal/repository/agents"
-	marketrepo "github.com/kasaderos/camel/internal/repository/market"
-	"github.com/kasaderos/camel/internal/service/agent"
-	marketservice "github.com/kasaderos/camel/internal/service/market"
-	"github.com/kasaderos/camel/pkg/alpaca"
 	"github.com/samber/do/v2"
+
+	marketrepo "github.com/kasaderos/camel/internal/repository/market"
+	portfolioRepo "github.com/kasaderos/camel/internal/repository/portfolio"
+	marketservice "github.com/kasaderos/camel/internal/service/market"
+	portfolioService "github.com/kasaderos/camel/internal/service/portfolio"
+	"github.com/kasaderos/camel/pkg/alpaca"
 )
 
 func provide() (do.Injector, error) {
@@ -56,13 +57,13 @@ func provide() (do.Injector, error) {
 		return db, nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*agents.AgentRepository, error) {
+	do.Provide(injector, func(i do.Injector) (*portfolioRepo.Repository, error) {
 		db, err := do.Invoke[*sqlx.DB](i)
 		if err != nil {
 			return nil, err
 		}
 
-		return agents.New(db), nil
+		return portfolioRepo.New(db), nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*marketrepo.Repository, error) {
@@ -111,23 +112,23 @@ func provide() (do.Injector, error) {
 		return marketservice.New(client, repo), nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*agent.Service, error) {
-		repo, err := do.Invoke[*agents.AgentRepository](i)
+	do.Provide(injector, func(i do.Injector) (*portfolioService.Service, error) {
+		exchange, err := do.Invoke[*alpaca.TradingClient](i)
 		if err != nil {
 			return nil, err
 		}
 
-		market, err := do.Invoke[*marketservice.Service](i)
+		portfolioRepo, err := do.Invoke[*portfolioRepo.Repository](i)
 		if err != nil {
 			return nil, err
 		}
 
-		trading, err := do.Invoke[*alpaca.TradingClient](i)
+		market, err := do.Invoke[*alpaca.MarketClient](i)
 		if err != nil {
 			return nil, err
 		}
 
-		return agent.New(repo, repo, market, trading), nil
+		return portfolioService.New(exchange, portfolioRepo, market), nil
 	})
 
 	return injector, nil

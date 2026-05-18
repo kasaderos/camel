@@ -15,10 +15,16 @@ lint:
 	golangci-lint run --fix --config .golangci.yml
 
 portfolio:
-	docker compose run --rm portfolio-manager create --csv /app/portfolios/portfolio-1.csv
+	docker compose run --rm portfolio-manager create --id portfolio1 --csv /app/portfolios/portfolio-1.csv --cash 10000
 
 portfolio-info:
-	docker compose run --rm portfolio-manager info --id portfolio-agent-1
+	docker compose run --rm portfolio-manager info --id portfolio1
 
 portfolio-rebalance:
-	docker compose run --rm portfolio-manager rebalance --id portfolio-agent-1
+	docker compose run --rm portfolio-manager rebalance --id portfolio1
+
+migrate-drop:
+	docker compose run --rm portfolio-manager migrate-drop
+
+migrate-up:
+	docker compose run --rm portfolio-manager migrate-up

@@ -3,233 +3,248 @@ package portfolio
 import (
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
 	"math"
 	"time"
 
 	"github.com/kasaderos/camel/internal/model"
+	"github.com/kasaderos/camel/pkg/alpaca"
+	"github.com/samber/lo"
+	"github.com/shopspring/decimal"
 )
 
 type Agent struct {
 	model.PortfolioAgent
 
-	assetAgents []AssetAgent
-	repository  AgentRepository
+	repo     AgentRepository
+	market   MarketService
+	exchange Exchanger
 }
 
-func NewAgent(agent model.PortfolioAgent, repo AgentRepository, assetAgents []AssetAgent) *Agent {
+func NewAgent(
+	agent model.PortfolioAgent,
+	repo AgentRepository,
+	market MarketService,
+	exchange Exchanger,
+) *Agent {
 	return &Agent{
 		PortfolioAgent: agent,
-		repository:     repo,
-		assetAgents:    assetAgents,
+		repo:           repo,
+		market:         market,
+		exchange:       exchange,
 	}
 }
 
-// Coordinate executes a function on each asset agent in the portfolio
-func (a *Agent) Coordinate(ctx context.Context, fn func(context.Context, AssetAgent) error) error {
-	for _, assetAgent := range a.assetAgents {
-		if err := fn(ctx, assetAgent); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (a *Agent) UpdatePortfolio(ctx context.Context) (*model.Portfolio, error) {
-	err := a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
-		_, err := agent.UpdateState(ctx)
-
-		return err
-	})
-	if err != nil {
-		return nil, fmt.Errorf("update agent states: %w", err)
-	}
-
-	newPortfolio, err := a.FetchPortfolio(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("fetch portfolio weights: %w", err)
-	}
-
-	return newPortfolio, nil
-}
-
-func (a *Agent) Rebalance(ctx context.Context) error {
-	portfolio, err := a.FetchPortfolio(ctx)
-	if err != nil {
-		return fmt.Errorf("fetch portfolio weights: %w", err)
-	}
-
-	// 1. Update portfolio
-	newPortfolio, err := a.UpdatePortfolio(ctx)
-	if err != nil {
-		return fmt.Errorf("update portfolio: %w", err)
-	}
-
-	// 2. First pass: Sell/withdraw assets to generate free cash
-	freeCash := 0.0
-
-	err = a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
-		agentInfo := agent.FetchInfo(ctx)
-
-		asset, _ := portfolio.Asset(agentInfo.AssetID)
-		newAsset, exist := newPortfolio.Asset(agentInfo.AssetID)
-
-		// Close positions for assets not in target weights
-		if !exist {
-			agentInfo, err := agent.ClosePosition(ctx)
-			if err != nil {
-				return fmt.Errorf("agent close position: %w", err)
-			}
-
-			freeCash += agentInfo.Cash
-
-			return nil
-		}
-
-		excessSum := roundMoney(asset.Sum() - newAsset.Sum())
-
-		// Withdraw excess or clean up small positions
-		if excessSum > 0 {
-			// Normal case: agent has more than target
-			agentInfo, err := agent.WithdrawWithSell(ctx, excessSum)
-			if err != nil {
-				return fmt.Errorf("agent withdraw with sell: %w", err)
-			}
-
-			freeCash += agentInfo.Cash
-		} else if agentInfo.NoPositions() && agentInfo.HasCash() {
-			// Withdraw all remaining
-			agentInfo, err := agent.Withdraw(ctx, agentInfo.Cash)
-			if err != nil {
-				return fmt.Errorf("agent withdraw with sell: %w", err)
-			}
-
-			freeCash += agentInfo.Cash
-		}
-
+func (a *Agent) ClosePosition(ctx context.Context) error {
+	if a.AssetQty <= 1e-3 {
 		return nil
-	})
-	if err != nil {
-		return err
 	}
 
-	// 3. Second pass: Buy/deposit assets using available free cash
-	err = a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
-		agentInfo := agent.FetchInfo(ctx)
-
-		asset, _ := portfolio.Asset(agentInfo.AssetID)
-		targetAsset, exist := newPortfolio.Asset(agentInfo.AssetID)
-
-		// Skip assets not in target weights
-		if !exist {
-			return nil
-		}
-
-		deficitSum := roundMoney(targetAsset.Sum() - asset.Sum())
-
-		if deficitSum > 0 && freeCash >= deficitSum {
-			_, err := agent.DepositWithBuy(ctx, deficitSum)
-			if err != nil {
-				return fmt.Errorf("agent deposit with buy: %w", err)
-			}
-
-			freeCash -= deficitSum
-		}
-
-		return nil
-	})
-
-	return nil
-}
-
-func (a *Agent) FetchPortfolio(ctx context.Context) (*model.Portfolio, error) {
-	const threshold = 0.01
-
-	type candidate struct {
-		assetID string
-		price   float64
-		qty     float64
-		score   float64
-	}
-
-	candidates := make([]candidate, 0, len(a.assetAgents))
-
-	var totalScore float64
-
-	// Collect candidates above threshold
-	err := a.Coordinate(ctx, func(ctx context.Context, agent AssetAgent) error {
-		agentInfo := agent.FetchInfo(ctx)
-
-		score, ok := agentInfo.State.EmaChange()
-		if !ok {
-			slog.Error("agent state ema_change invalid", "id", agentInfo.ID)
-			return nil
-		}
-
-		// long-only threshold filter
-		if score < threshold {
-			return nil
-		}
-
-		price, err := agent.FetchPrice(ctx)
-		if err != nil {
-			return fmt.Errorf("fetch price: %w", err)
-		}
-
-		candidates = append(candidates, candidate{
-			assetID: agentInfo.AssetID,
-			score:   score,
-			price:   price,
-			qty:     agentInfo.AssetQty,
-		})
-
-		totalScore += score
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	assets := make(map[string]model.PortfolioAsset)
-
-	if totalScore == 0 {
-		return &model.Portfolio{Assets: assets}, nil
-	}
-
-	for _, c := range candidates {
-		assets[c.assetID] = model.PortfolioAsset{
-			AssetID: c.assetID,
-			Price:   c.price,
-			Qty:     c.qty,
-			Weight:  c.score / totalScore,
-		}
-	}
-
-	return &model.Portfolio{Assets: assets}, nil
-}
-
-func (a *Agent) PrintInfo(ctx context.Context, w io.Writer) {
-	fmt.Fprintf(w, "portfolio_agent_id=%s portfolio_id=%s created_at=%s updated_at=%s\n",
-		a.ID,
-		a.PortfolioID,
-		a.CreatedAt.Format(time.RFC3339),
-		a.UpdatedAt.Format(time.RFC3339),
+	_, err := a.exchange.CreateMarketOrder(
+		ctx,
+		a.AssetID,
+		a.AssetQty,
+		model.OrderSideSell,
 	)
-	fmt.Fprintln(w, "")
-
-	portfolio, err := a.FetchPortfolio(ctx)
 	if err != nil {
-		fmt.Fprintf(w, "error calculating portfolio weights: %v\n", err)
-		return
+		return fmt.Errorf("create market order: %w", err)
 	}
 
-	portfolio.Print(w)
+	a.AssetQty = 0.0
+
+	err = a.repo.UpdatePortfolioAgent(ctx, a.PortfolioAgent)
+	if err != nil {
+		return fmt.Errorf("update portfolio agent: %w", err)
+	}
+
+	return nil
 }
 
-// roundMoney rounds a float64 to 2 decimal places (cents)
-func roundMoney(amount float64) float64 {
-	return math.Round(amount*100) / 100
+func (a *Agent) AdjustTargetSum(
+	ctx context.Context,
+	targetSum float64,
+) error {
+	currentPrice, err := a.exchange.FetchPrice(ctx, a.AssetID)
+	if err != nil {
+		return fmt.Errorf("fetch current price: %w", err)
+	}
+
+	currentSum := a.AssetQty * currentPrice
+	slog.Info(
+		"adjusting target sum",
+		"asset_id", a.AssetID,
+		"current_value", currentSum,
+		"target_sum", targetSum,
+	)
+
+	// Skip if already within one unit of the target in either direction.
+	if currentSum > targetSum && currentSum-currentPrice < targetSum {
+		slog.Info("no adjustment needed: over by less than one unit")
+		return nil
+	}
+
+	if math.Abs(currentSum-targetSum) < 0.01 {
+		slog.Info("no adjustment needed: sum diff < 0.01$")
+		return nil
+	}
+
+	targetQty := targetSum / currentPrice
+	deltaQty := targetQty - a.AssetQty
+
+	var side string
+	if deltaQty > 0 {
+		side = model.OrderSideBuy
+	} else {
+		side = model.OrderSideSell
+	}
+
+	assetQty := math.Ceil(math.Abs(deltaQty))
+
+	slog.Info(
+		"create order",
+		"asset_id", a.AssetID,
+		"price", currentPrice,
+		"qty", assetQty,
+		"side", side,
+	)
+
+	order, err := a.exchange.CreateMarketOrder(
+		ctx,
+		a.AssetID,
+		assetQty,
+		side,
+	)
+	if err != nil {
+		return fmt.Errorf("create order: %w", err)
+	}
+
+	agentQtyChange := order.Qty
+	if order.Side == model.OrderSideSell {
+		agentQtyChange = -order.Qty
+	}
+
+	a.PortfolioAgent.AssetQty += agentQtyChange
+
+	err = a.repo.UpdatePortfolioAgent(ctx, a.PortfolioAgent)
+	if err != nil {
+		return fmt.Errorf("update portfolio agent: %w", err)
+	}
+
+	return nil
+}
+
+func (a *Agent) FetchScore(ctx context.Context) (float64, error) {
+	// Asset agent settings
+	const (
+		lookback = 3
+		window   = 3
+	)
+
+	now := time.Now()
+
+	mBars, err := a.market.FetchBars(
+		ctx,
+		a.AssetID,
+		now.Add(-24*time.Hour*365),
+		now,
+	)
+	if err != nil {
+		return 0.0, fmt.Errorf("failed to fetch market data: %w", err)
+	}
+
+	bars := lo.Map(mBars, func(b alpaca.Bar, _ int) model.Bar {
+		return model.Bar{
+			Timestamp: b.Timestamp,
+			Open:      b.Open,
+			High:      b.High,
+			Low:       b.Low,
+			Close:     b.Close,
+			Volume:    b.Volume,
+		}
+	})
+
+	score := calcEMAChange(bars, window, lookback)
+
+	return score, nil
+}
+
+func calcEMAChange(bars []model.Bar, window, lookback int) float64 {
+	if len(bars) < window {
+		return 0.0
+	}
+
+	prices := extractClosePrices(bars)
+
+	emaValues := ema(prices, window)
+	changeValue := priceChange(emaValues, lookback)
+
+	return decimal.NewFromFloat(changeValue).Round(3).InexactFloat64()
+}
+
+func extractClosePrices(bars []model.Bar) []float64 {
+	prices := make([]float64, len(bars))
+	for i, bar := range bars {
+		prices[i] = bar.Close
+	}
+
+	return prices
+}
+
+func ema(prices []float64, n int) []float64 {
+	if len(prices) == 0 || n <= 0 {
+		return nil
+	}
+
+	result := make([]float64, len(prices))
+
+	smoothing := 2.0
+	multiplier := smoothing / (1.0 + float64(n))
+
+	result[0] = prices[0]
+
+	for i := 1; i < len(prices); i++ {
+		// EMA_today = (Price_today * Multiplier) + (EMA_yesterday * (1 - Multiplier))
+		todayPrice := prices[i]
+		yesterdayEMA := result[i-1]
+
+		emaValue := (todayPrice * multiplier) + (yesterdayEMA * (1.0 - multiplier))
+
+		result[i] = math.Round(emaValue*100) / 100
+	}
+
+	return result
+}
+
+func priceChange(ema []float64, lookback int) float64 {
+	n := len(ema)
+
+	if n <= lookback || lookback <= 0 {
+		return 0.0
+	}
+
+	idxStart := n - 1 - lookback
+	interval := ema[idxStart:]
+
+	if len(interval) > 2 {
+		for i := 1; i < len(interval)-1; i++ {
+			current := interval[i]
+			prev := interval[i-1]
+			next := interval[i+1]
+
+			if (current > prev && current > next) || (current < prev && current < next) {
+				return 0.0
+			}
+		}
+	}
+
+	startVal := interval[0]
+	endVal := interval[len(interval)-1]
+
+	if startVal == 0 {
+		return 0.0
+	}
+
+	change := (endVal / startVal) - 1.0
+
+	return change
 }
