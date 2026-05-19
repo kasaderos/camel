@@ -103,17 +103,25 @@ func (s *Service) Rebalance(ctx context.Context, p model.Portfolio) error {
 	for _, agent := range agents {
 		sum := targetSums[agent.AssetID]
 
-		err = agent.AdjustTargetSum(ctx, sum)
+		order, err := agent.AdjustTargetSum(ctx, sum)
 		if err != nil {
 			return fmt.Errorf("adjust target sum: %w", err)
 		}
+
+		if order != nil {
+			totalAgentsCash -= order.Sum()
+		}
+	}
+
+	if totalAgentsCash < 0 {
+		slog.Warn("total agents cash negative", "remaining cash", totalAgentsCash)
+		totalAgentsCash = 0
 	}
 
 	err = s.repo.UpdatePortfolio(ctx, model.Portfolio{
 		ID:      p.ID,
 		Weights: weights,
-		// todo fetch actual left cash
-		Cash: 0.0,
+		Cash:    totalAgentsCash,
 	})
 	if err != nil {
 		return fmt.Errorf("update portfolio: %w", err)

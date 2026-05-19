@@ -142,7 +142,7 @@ func (s *AgentTestSuite) TestAdjustTargetSum() {
 					Once()
 			}
 
-			err := agent.AdjustTargetSum(s.ctx, tc.targetSum)
+			_, err := agent.AdjustTargetSum(s.ctx, tc.targetSum)
 			s.Require().NoError(err)
 		})
 	}

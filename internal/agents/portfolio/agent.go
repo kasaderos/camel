@@ -63,10 +63,10 @@ func (a *Agent) ClosePosition(ctx context.Context) error {
 func (a *Agent) AdjustTargetSum(
 	ctx context.Context,
 	targetSum float64,
-) error {
+) (*model.Order, error) {
 	currentPrice, err := a.exchange.FetchPrice(ctx, a.AssetID)
 	if err != nil {
-		return fmt.Errorf("fetch current price: %w", err)
+		return nil, fmt.Errorf("fetch current price: %w", err)
 	}
 
 	currentSum := a.AssetQty * currentPrice
@@ -80,12 +80,12 @@ func (a *Agent) AdjustTargetSum(
 	// Skip if already within one unit of the target in either direction.
 	if currentSum > targetSum && currentSum-currentPrice < targetSum {
 		slog.Info("no adjustment needed: over by less than one unit")
-		return nil
+		return nil, nil
 	}
 
 	if math.Abs(currentSum-targetSum) < 0.01 {
 		slog.Info("no adjustment needed: sum diff < 0.01$")
-		return nil
+		return nil, nil
 	}
 
 	targetQty := targetSum / currentPrice
@@ -115,7 +115,7 @@ func (a *Agent) AdjustTargetSum(
 		side,
 	)
 	if err != nil {
-		return fmt.Errorf("create order: %w", err)
+		return nil, fmt.Errorf("create order: %w", err)
 	}
 
 	agentQtyChange := order.Qty
@@ -127,10 +127,10 @@ func (a *Agent) AdjustTargetSum(
 
 	err = a.repo.UpdatePortfolioAgent(ctx, a.PortfolioAgent)
 	if err != nil {
-		return fmt.Errorf("update portfolio agent: %w", err)
+		return nil, fmt.Errorf("update portfolio agent: %w", err)
 	}
 
-	return nil
+	return order, nil
 }
 
 func (a *Agent) FetchScore(ctx context.Context) (float64, error) {
