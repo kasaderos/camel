@@ -16,12 +16,15 @@ lint:
 
 portfolio:
 	docker compose run --rm portfolio-manager create --id portfolio1 --csv /app/portfolios/portfolio-1.csv --cash 10000
+	docker compose run --rm portfolio-manager create --id portfolio2 --csv /app/portfolios/portfolio-2.csv --cash 10000
 
 portfolio-info:
 	docker compose run --rm portfolio-manager info --id portfolio1
+	docker compose run --rm portfolio-manager info --id portfolio2
 
 portfolio-rebalance:
 	docker compose run --rm portfolio-manager rebalance --id portfolio1
+	docker compose run --rm portfolio-manager rebalance --id portfolio2
 
 migrate-drop:
 	docker compose run --rm portfolio-manager migrate-drop

@@ -68,6 +68,8 @@ func (s *Service) Rebalance(ctx context.Context, p model.Portfolio) error {
 		return fmt.Errorf("fetch portfolio agents: %w", err)
 	}
 
+	slog.Info("portfolio agents", "id", p.ID, "total", len(agents))
+
 	totalAgentsCash := p.Cash
 	for _, agent := range agents {
 		price, err := s.exchange.FetchPrice(ctx, agent.AssetID)
@@ -77,6 +79,8 @@ func (s *Service) Rebalance(ctx context.Context, p model.Portfolio) error {
 
 		totalAgentsCash += agent.AssetQty * price
 	}
+
+	slog.Info("total portfolio value", "total agents cash", totalAgentsCash)
 
 	weights := map[string]float64{}
 	targetSums := map[string]float64{}
@@ -103,20 +107,25 @@ func (s *Service) Rebalance(ctx context.Context, p model.Portfolio) error {
 	for _, agent := range agents {
 		sum := targetSums[agent.AssetID]
 
-		order, err := agent.AdjustTargetSum(ctx, sum)
+		_, err := agent.AdjustTargetSum(ctx, sum)
 		if err != nil {
 			return fmt.Errorf("adjust target sum: %w", err)
 		}
 
-		if order != nil {
-			totalAgentsCash -= order.Sum()
-		}
+		totalAgentsCash -= sum
 	}
 
 	if totalAgentsCash < 0 {
 		slog.Warn("total agents cash negative", "remaining cash", totalAgentsCash)
 		totalAgentsCash = 0
 	}
+
+	slog.Info(
+		"update portfolio",
+		"id", p.ID,
+		"weights", weights,
+		"cash", totalAgentsCash,
+	)
 
 	err = s.repo.UpdatePortfolio(ctx, model.Portfolio{
 		ID:      p.ID,
