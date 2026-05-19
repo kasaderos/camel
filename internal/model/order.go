@@ -5,22 +5,22 @@ import "time"
 const (
 	OrderStatusPending   = "pending"
 	OrderStatusCompleted = "completed"
+
+	OrderSideBuy  = "buy"
+	OrderSideSell = "sell"
 )
 
-type PendingOrder struct {
-	PortfolioID int64
-	Symbol      string
-	Sum         float64
+type Order struct {
+	ID      string
+	AssetID string
+	Price   float64
+	Qty     float64
+	Side    string
 
+	Status    string
 	CreatedAt time.Time
 }
 
-type Order struct {
-	ID     string
-	Symbol string
-
-	Amount float64
-	Price  float64
-
-	CreatedAt time.Time
+func (p Order) Sum() float64 {
+	return p.Price * p.Qty
 }

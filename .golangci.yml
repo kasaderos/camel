@@ -1,0 +1,30 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - revive
+    - unconvert
+    - prealloc
+    - nilerr
+    - errorlint
+    - perfsprint
+    - gocyclo
+    - wsl_v5
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+    - gci
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

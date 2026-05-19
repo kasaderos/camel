@@ -6,12 +6,11 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	marketv1 "github.com/kasaderos/camel/gen/proto/market/v1"
 	"github.com/kasaderos/camel/gen/proto/market/v1/marketv1connect"
 	"github.com/kasaderos/camel/internal/model"
-	"github.com/kasaderos/camel/pkg/slices"
+	"github.com/samber/lo"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Service interface {
@@ -50,12 +49,9 @@ func (h *Handler) FetchBars(
 		)
 	}
 
-	resp, _ := slices.Map(
-		result,
-		func(bar model.Bar) (*marketv1.Bar, error) {
-			return mapBarToProtoBar(bar), nil
-		},
-	)
+	resp := lo.Map(result, func(bar model.Bar, _ int) *marketv1.Bar {
+		return mapBarToProtoBar(bar)
+	})
 
 	return &marketv1.FetchBarsResponse{
 		Bars: resp,

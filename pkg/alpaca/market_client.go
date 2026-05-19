@@ -1,26 +1,29 @@
 package alpaca
 
 import (
-	"github.com/alpacahq/alpaca-trade-api-go/v3/marketdata"
+	"log/slog"
+	"net/http"
 )
 
-type MarketDataClient struct {
-	client *marketdata.Client
+type MarketClient struct {
+	client *http.Client
+
+	baseURL string
+	apikey  string
+	secret  string
 }
 
-func NewMarketDataClient(
+func NewMarketClient(
 	apikey, apisecret string,
 	baseURL string,
-) (*MarketDataClient, error) {
-	client := marketdata.NewClient(
-		marketdata.ClientOpts{
-			APIKey:    apikey,
-			APISecret: apisecret,
-			BaseURL:   baseURL,
-		},
-	)
+) (*MarketClient, error) {
+	slog.Info("alpaca", "baseURL", baseURL)
 
-	return &MarketDataClient{
-		client: client,
+	return &MarketClient{
+		client: &http.Client{},
+
+		baseURL: baseURL,
+		apikey:  apikey,
+		secret:  apisecret,
 	}, nil
 }
