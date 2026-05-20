@@ -98,6 +98,11 @@ func (s *Service) Rebalance(ctx context.Context, p model.Portfolio) error {
 			newWeight = score / totalScore
 		}
 
+		// if it's single asset in portfolio reduce weight to 1/3
+		if newWeight > 0.999 {
+			newWeight = 0.33
+		}
+
 		weights[agent.AssetID] = newWeight
 		targetSums[agent.AssetID] = newWeight * totalAgentsCash
 
