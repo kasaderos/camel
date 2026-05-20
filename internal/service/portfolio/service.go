@@ -92,7 +92,11 @@ func (s *Service) Rebalance(ctx context.Context, p model.Portfolio) error {
 
 	for _, agent := range agents {
 		score := scores[agent.AssetID]
-		newWeight := score / totalScore
+
+		newWeight := 0.0
+		if totalScore > 0 {
+			newWeight = score / totalScore
+		}
 
 		weights[agent.AssetID] = newWeight
 		targetSums[agent.AssetID] = newWeight * totalAgentsCash
