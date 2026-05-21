@@ -31,3 +31,6 @@ migrate-drop:
 
 migrate-up:
 	docker compose run --rm portfolio-manager migrate-up
+
+docker-image:
+	docker build --platform linux/amd64 -t kasaderos99/camel:v1 .

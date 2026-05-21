@@ -34,16 +34,8 @@ func (r *Repository) CreatePortfolio(
 	portfolio model.Portfolio,
 ) error {
 	const query = `
-		INSERT INTO portfolios (
-			id,
-			cash,
-			weights
-		) VALUES (
-			:id,
-			:cash,
-			:weights
-		)
-	`
+		INSERT INTO portfolios (id, cash, weights)
+		VALUES (:id, :cash, :weights)`
 
 	_, err := r.db.NamedExecContext(ctx, query, Portfolio{
 		ID:      portfolio.ID,

@@ -37,7 +37,8 @@ func (r *Repository) CreatePortfolioAgent(
 			:asset_id,
 			:asset_qty,
 			:score
-		)`
+		)
+	`
 
 	_, err := r.db.NamedExecContext(
 		ctx,
