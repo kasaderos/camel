@@ -159,7 +159,8 @@ func fetchAgentScores(
 	for _, a := range agents {
 		score, err := a.FetchScore(ctx)
 		if err != nil {
-			return nil, 0.0, fmt.Errorf("fetch score: %w", err)
+			slog.Error("fetch score", "err", err)
+			continue
 		}
 
 		slog.Info(
