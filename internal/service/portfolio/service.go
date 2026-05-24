@@ -159,7 +159,7 @@ func fetchAgentScores(
 	for _, a := range agents {
 		score, err := a.FetchScore(ctx)
 		if err != nil {
-			slog.Error("fetch score", "err", err)
+			slog.Error("fetch score", "err", err, "asset", a.ID, "agent", a.ID)
 			continue
 		}
 
@@ -183,6 +183,23 @@ func (s *Service) FetchPortfolio(
 	id string,
 ) (model.Portfolio, error) {
 	return s.repo.FetchPortfolio(ctx, id)
+}
+
+func (s *Service) FetchPortfolioScore(
+	ctx context.Context,
+	portfolioID string,
+) (map[string]float64, error) {
+	agents, err := s.FetchPortfolioAgents(ctx, portfolioID)
+	if err != nil {
+		return nil, fmt.Errorf("fetch portfolio agents: %w", err)
+	}
+
+	scores, _, err := fetchAgentScores(ctx, agents)
+	if err != nil {
+		return nil, fmt.Errorf("fetch agent scores: %w", err)
+	}
+
+	return scores, nil
 }
 
 func (s *Service) UpdatePortfolio(
