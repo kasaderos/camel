@@ -117,7 +117,7 @@ func (c *TradingClient) FetchPrice(ctx context.Context, assetID string) (float64
 	bars, err := c.marketClient.FetchBars(
 		ctx,
 		assetID,
-		time.Now().Add(-24*time.Hour),
+		time.Now().Add(-24*time.Hour*5),
 		time.Now(),
 	)
 	if err != nil {
