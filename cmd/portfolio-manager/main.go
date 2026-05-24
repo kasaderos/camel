@@ -50,15 +50,27 @@ func main() {
 			},
 			{
 				Name:  "rebalance",
-				Usage: "Rebalance a portfolio by agent id (updates state of all asset agents)",
+				Usage: "Rebalance a portfolio by id",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "id",
-						Usage:    "Portfolio agent id",
+						Usage:    "Portfolio id",
 						Required: true,
 					},
 				},
 				Action: rebalance,
+			},
+			{
+				Name:  "score",
+				Usage: "Prints the current score of portfolio by id",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "id",
+						Usage:    "Portfolio id",
+						Required: true,
+					},
+				},
+				Action: score,
 			},
 			{
 				Name:   "migrate-up",

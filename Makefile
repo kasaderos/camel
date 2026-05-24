@@ -22,6 +22,9 @@ portfolio-info:
 	docker compose run --rm portfolio-manager info --id portfolio1
 	docker compose run --rm portfolio-manager info --id portfolio2
 
+portfolio-score:
+	docker compose run --rm portfolio-manager score --id portfolio1
+
 portfolio-rebalance:
 	docker compose run --rm portfolio-manager rebalance --id portfolio1
 	docker compose run --rm portfolio-manager rebalance --id portfolio2

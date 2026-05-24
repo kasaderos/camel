@@ -107,6 +107,27 @@ func rebalance(ctx context.Context, c *cli.Command) error {
 	return nil
 }
 
+func score(ctx context.Context, c *cli.Command) error {
+	injector, err := provide()
+	if err != nil {
+		return err
+	}
+	defer terminate(injector)
+
+	service := do.MustInvoke[*portfolio.Service](injector)
+
+	scores, err := service.FetchPortfolioScore(ctx, c.String("id"))
+	if err != nil {
+		return fmt.Errorf("fetch portfolio: %w", err)
+	}
+
+	for assetID, score := range scores {
+		fmt.Fprintf(c.Writer, "%s: %.2f\n", assetID, score)
+	}
+
+	return nil
+}
+
 func readAssetsCSV(path string) ([]model.Asset, error) {
 	f, err := os.Open(path)
 	if err != nil {
