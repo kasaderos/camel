@@ -28,5 +28,8 @@ type Exchanger interface {
 		qty float64,
 		side string, // "buy" or "sell"
 	) (*model.Order, error)
-	FetchPrice(ctx context.Context, assetID string) (float64, error)
+	FetchPrice(
+		ctx context.Context,
+		assetID string,
+	) (float64, time.Time, error)
 }

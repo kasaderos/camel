@@ -2,12 +2,16 @@ package portfolio
 
 import (
 	"context"
+	"time"
 
 	"github.com/kasaderos/camel/internal/model"
 )
 
 type Exchanger interface {
-	FetchPrice(ctx context.Context, assetID string) (float64, error)
+	FetchPrice(
+		ctx context.Context,
+		assetID string,
+	) (float64, time.Time, error)
 	CreateMarketOrder(
 		ctx context.Context,
 		symbol string,

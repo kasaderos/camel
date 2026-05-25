@@ -64,7 +64,7 @@ func (a *Agent) AdjustTargetSum(
 	ctx context.Context,
 	targetSum float64,
 ) (*model.Order, error) {
-	currentPrice, err := a.exchange.FetchPrice(ctx, a.AssetID)
+	currentPrice, _, err := a.exchange.FetchPrice(ctx, a.AssetID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch current price: %w", err)
 	}
@@ -151,6 +151,10 @@ func (a *Agent) FetchScore(ctx context.Context) (float64, error) {
 	if err != nil {
 		return 0.0, fmt.Errorf("failed to fetch market data: %w", err)
 	}
+
+	lastBar := mBars[len(mBars)-1]
+
+	slog.Info("last bar", "timestamp", lastBar.Timestamp, "close", lastBar.Close)
 
 	bars := lo.Map(mBars, func(b alpaca.Bar, _ int) model.Bar {
 		return model.Bar{

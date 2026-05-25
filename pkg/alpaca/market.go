@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"sort"
 	"time"
 )
 
@@ -23,7 +24,7 @@ func (s *MarketClient) FetchBars(
 	values.Set("timeframe", "1D")
 	values.Set("start", start.Format(time.DateOnly))
 	values.Set("end", end.Format(time.DateOnly))
-	values.Set("limit", "100")
+	values.Set("limit", "400")
 	values.Set("adjustment", "raw")
 	values.Set("feed", "iex")
 	values.Set("sort", "asc")
@@ -36,7 +37,7 @@ func (s *MarketClient) FetchBars(
 		nil,
 	)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("new request: %w", err)
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -45,7 +46,7 @@ func (s *MarketClient) FetchBars(
 
 	resp, err := s.client.Do(req)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("do request: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -76,6 +77,10 @@ func (s *MarketClient) FetchBars(
 	if !exist {
 		return nil, fmt.Errorf("symbol not found in bars response: %s", symbol)
 	}
+
+	sort.Slice(bars, func(i, j int) bool {
+		return bars[i].Timestamp.Before(bars[j].Timestamp)
+	})
 
 	return bars, nil
 }

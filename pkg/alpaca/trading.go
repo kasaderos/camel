@@ -112,7 +112,7 @@ func (c *TradingClient) CreateMarketOrder(
 }
 
 // FetchPrice retrieves the current market price for an asset
-func (c *TradingClient) FetchPrice(ctx context.Context, assetID string) (float64, error) {
+func (c *TradingClient) FetchPrice(ctx context.Context, assetID string) (float64, time.Time, error) {
 	// Fetch the most recent bar to get current price
 	bars, err := c.marketClient.FetchBars(
 		ctx,
@@ -121,13 +121,15 @@ func (c *TradingClient) FetchPrice(ctx context.Context, assetID string) (float64
 		time.Now(),
 	)
 	if err != nil {
-		return 0, fmt.Errorf("failed to fetch bars for %s: %w", assetID, err)
+		return 0, time.Time{}, fmt.Errorf("failed to fetch bars for %s: %w", assetID, err)
 	}
 
 	if len(bars) == 0 {
-		return 0, fmt.Errorf("no price data available for asset %s", assetID)
+		return 0, time.Time{}, fmt.Errorf("no price data available for asset %s", assetID)
 	}
 
+	lastBar := bars[len(bars)-1]
+
 	// Return the close price of the most recent bar
-	return bars[len(bars)-1].Close, nil
+	return lastBar.Close, lastBar.Timestamp, nil
 }

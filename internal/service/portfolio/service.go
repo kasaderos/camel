@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/kasaderos/camel/internal/agents/portfolio"
 	"github.com/kasaderos/camel/internal/model"
@@ -70,11 +71,17 @@ func (s *Service) Rebalance(ctx context.Context, p model.Portfolio) error {
 
 	slog.Info("portfolio agents", "id", p.ID, "total", len(agents))
 
+	now := time.Now()
+
 	totalAgentsCash := p.Cash
 	for _, agent := range agents {
-		price, err := s.exchange.FetchPrice(ctx, agent.AssetID)
+		price, t, err := s.exchange.FetchPrice(ctx, agent.AssetID)
 		if err != nil {
 			return fmt.Errorf("fetch price: %w", err)
+		}
+
+		if now.Sub(t) > 25*time.Hour {
+			return fmt.Errorf("price data too old for asset %s: %s", agent.AssetID, t)
 		}
 
 		totalAgentsCash += agent.AssetQty * price

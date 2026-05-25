@@ -11,6 +11,8 @@ type Portfolio struct {
 	ID      string
 	Weights map[string]float64
 	Cash    float64
+
+	Scores map[string]float64
 }
 
 type PortfolioAsset struct {
