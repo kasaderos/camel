@@ -27,6 +27,7 @@ services:
       APCA_API_KEY_ID: ${APCA_API_KEY_ID}
       APCA_API_SECRET_KEY: ${APCA_API_SECRET_KEY}
       ALPACA_MARKETDATA_URL: ${ALPACA_MARKETDATA_URL:-https://data.alpaca.markets}
+      ALPACA_TRADING_URL: ${ALPACA_TRADING_URL:-https://paper-api.alpaca.markets}
     entrypoint: ["/usr/local/bin/portfolio-manager"]
     command: ["--help"]
 
