@@ -2,25 +2,38 @@ package model
 
 import "time"
 
-const (
-	OrderStatusPending   = "pending"
-	OrderStatusCompleted = "completed"
+type OrderSide string
 
-	OrderSideBuy  = "buy"
-	OrderSideSell = "sell"
+type OrderStatus string
+
+const (
+	OrderStatusPending         OrderStatus = "pending"
+	OrderStatusPartiallyFilled OrderStatus = "partially_filled"
+	OrderStatusFilled          OrderStatus = "filled"
+	OrderStatusCancelled       OrderStatus = "cancelled"
+)
+
+const (
+	OrderSideBuy  OrderSide = "buy"
+	OrderSideSell OrderSide = "sell"
+	OrderSideNone OrderSide = "none"
 )
 
 type Order struct {
-	ID      string
-	AssetID string
-	Price   float64
-	Qty     float64
-	Side    string
+	ID string
 
-	Status    string
+	AssetID      string
+	AvgFillPrice float64
+	Qty          float64
+	FilledQty    float64
+
+	Side   OrderSide
+	Status OrderStatus
+
+	FilledAt  time.Time
 	CreatedAt time.Time
 }
 
 func (p Order) Sum() float64 {
-	return p.Price * p.Qty
+	return p.AvgFillPrice * p.Qty
 }

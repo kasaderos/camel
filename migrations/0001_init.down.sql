@@ -1,5 +1,4 @@
-DROP TABLE portfolios;
-
-DROP TABLE portfolio_agents;
-
-DROP TABLE asset_bars;
+DROP TABLE IF EXISTS rebalance_tasks;
+DROP TABLE IF EXISTS portfolio_stocks;
+DROP TABLE IF EXISTS portfolios;
+DROP TABLE IF EXISTS asset_bars;

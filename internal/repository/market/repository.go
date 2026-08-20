@@ -6,28 +6,33 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/kasaderos/camel/internal/model"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository struct {
-	db *sqlx.DB
+	db *gorm.DB
 }
 
-func New(db *sqlx.DB) *Repository {
+func New(db *gorm.DB) *Repository {
 	return &Repository{db: db}
 }
 
-type barRow struct {
-	AssetID   string    `db:"asset_id"`
-	Timestamp time.Time `db:"date"`
-	Open      float64   `db:"open"`
-	High      float64   `db:"high"`
-	Low       float64   `db:"low"`
-	Close     float64   `db:"close"`
+type AssetBar struct {
+	AssetID   string    `gorm:"column:asset_id;primaryKey"`
+	Timestamp time.Time `gorm:"column:date;primaryKey"`
+	Open      float64   `gorm:"column:open"`
+	High      float64   `gorm:"column:high"`
+	Low       float64   `gorm:"column:low"`
+	Close     float64   `gorm:"column:close"`
 }
 
-func (r barRow) toModel() model.Bar {
+func (AssetBar) TableName() string {
+	return "asset_bars"
+}
+
+func (r AssetBar) toModel() model.Bar {
 	return model.Bar{
 		Timestamp: r.Timestamp,
 		Open:      r.Open,
@@ -35,15 +40,6 @@ func (r barRow) toModel() model.Bar {
 		Low:       r.Low,
 		Close:     r.Close,
 	}
-}
-
-type insertBarRow struct {
-	AssetID string    `db:"asset_id"`
-	Date    time.Time `db:"date"`
-	Open    float64   `db:"open"`
-	High    float64   `db:"high"`
-	Low     float64   `db:"low"`
-	Close   float64   `db:"close"`
 }
 
 func (r *Repository) SaveBars(ctx context.Context, assetID string, bars []model.Bar) error {
@@ -55,26 +51,20 @@ func (r *Repository) SaveBars(ctx context.Context, assetID string, bars []model.
 		return nil
 	}
 
-	// Use a transaction so the batch insert is atomic.
-	return withTransaction(ctx, r.db, func(tx *sqlx.Tx) error {
-		rows := make([]insertBarRow, 0, len(bars))
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		rows := make([]AssetBar, 0, len(bars))
 		for _, b := range bars {
-			rows = append(rows, insertBarRow{
-				AssetID: assetID,
-				Date:    b.Timestamp,
-				Open:    b.Open,
-				High:    b.High,
-				Low:     b.Low,
-				Close:   b.Close,
+			rows = append(rows, AssetBar{
+				AssetID:   assetID,
+				Timestamp: b.Timestamp,
+				Open:      b.Open,
+				High:      b.High,
+				Low:       b.Low,
+				Close:     b.Close,
 			})
 		}
 
-		query := `
-			INSERT INTO asset_bars (asset_id, date, open, high, low, close)
-			VALUES (:asset_id, :date, :open, :high, :low, :close)
-			ON CONFLICT DO NOTHING`
-
-		_, err := tx.NamedExecContext(ctx, query, rows)
+		err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&rows).Error
 		if err != nil {
 			return fmt.Errorf("save bars: %w", err)
 		}
@@ -92,18 +82,11 @@ func (r *Repository) FetchBars(
 		return nil, errors.New("asset_id is required")
 	}
 
-	query := `
-		SELECT asset_id, date, open, high, low, close
-		FROM asset_bars
-		WHERE asset_id = $1
-			AND date >= $2
-			AND date <= $3
-		ORDER BY date 
-	`
-
-	var rows []barRow
-
-	err := r.db.SelectContext(ctx, &rows, query, assetID, start, end)
+	var rows []AssetBar
+	err := r.db.WithContext(ctx).
+		Where("asset_id = ? AND date >= ? AND date <= ?", assetID, start, end).
+		Order("date").
+		Find(&rows).Error
 	if err != nil {
 		return nil, fmt.Errorf("fetch bars: %w", err)
 	}
@@ -114,18 +97,4 @@ func (r *Repository) FetchBars(
 	}
 
 	return out, nil
-}
-
-func withTransaction(ctx context.Context, db *sqlx.DB, fn func(*sqlx.Tx) error) error {
-	tx, err := db.BeginTxx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	if err := fn(tx); err != nil {
-		return err
-	}
-
-	return tx.Commit()
 }

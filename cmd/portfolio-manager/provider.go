@@ -6,15 +6,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/jmoiron/sqlx"
 	"github.com/samber/do/v2"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 
 	marketrepo "github.com/kasaderos/camel/internal/repository/market"
 	portfolioRepo "github.com/kasaderos/camel/internal/repository/portfolio"
+	analyticsService "github.com/kasaderos/camel/internal/service/analytics"
+	exchangealpaca "github.com/kasaderos/camel/internal/service/exchange/alpaca"
 	marketservice "github.com/kasaderos/camel/internal/service/market"
 	portfolioService "github.com/kasaderos/camel/internal/service/portfolio"
-	"github.com/kasaderos/camel/pkg/alpaca"
 )
 
 func provide() (do.Injector, error) {
@@ -27,7 +28,7 @@ func provide() (do.Injector, error) {
 
 	do.ProvideValue(injector, cfg)
 
-	do.Provide(injector, func(i do.Injector) (*sqlx.DB, error) {
+	do.Provide(injector, func(i do.Injector) (*gorm.DB, error) {
 		cfg, err := do.Invoke[*config](i)
 		if err != nil {
 			return nil, err
@@ -42,23 +43,25 @@ func provide() (do.Injector, error) {
 			return nil, errors.New("postgres config is required (set DATABASE_URL or POSTGRES_* env vars)")
 		}
 
-		// Register pgx driver for sqlx.
-		_ = stdlib.GetDefaultDriver()
-
-		db, err := sqlx.Connect("pgx", dsn)
+		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		if err != nil {
 			return nil, fmt.Errorf("connect db: %w", err)
 		}
 
-		db.SetConnMaxLifetime(5 * time.Minute)
-		db.SetMaxIdleConns(4)
-		db.SetMaxOpenConns(10)
+		sqlDB, err := db.DB()
+		if err != nil {
+			return nil, fmt.Errorf("sql db: %w", err)
+		}
+
+		sqlDB.SetConnMaxLifetime(5 * time.Minute)
+		sqlDB.SetMaxIdleConns(4)
+		sqlDB.SetMaxOpenConns(10)
 
 		return db, nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*portfolioRepo.Repository, error) {
-		db, err := do.Invoke[*sqlx.DB](i)
+		db, err := do.Invoke[*gorm.DB](i)
 		if err != nil {
 			return nil, err
 		}
@@ -67,7 +70,7 @@ func provide() (do.Injector, error) {
 	})
 
 	do.Provide(injector, func(i do.Injector) (*marketrepo.Repository, error) {
-		db, err := do.Invoke[*sqlx.DB](i)
+		db, err := do.Invoke[*gorm.DB](i)
 		if err != nil {
 			return nil, err
 		}
@@ -75,31 +78,22 @@ func provide() (do.Injector, error) {
 		return marketrepo.New(db), nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*alpaca.MarketClient, error) {
+	do.Provide(injector, func(i do.Injector) (*exchangealpaca.Service, error) {
 		cfg, err := do.Invoke[*config](i)
 		if err != nil {
 			return nil, err
 		}
 
-		return alpaca.NewMarketClient(cfg.Alpaca.APIKey, cfg.Alpaca.Secret, cfg.Alpaca.MarketURL)
-	})
-
-	do.Provide(injector, func(i do.Injector) (*alpaca.TradingClient, error) {
-		cfg, err := do.Invoke[*config](i)
-		if err != nil {
-			return nil, err
-		}
-
-		marketClient, err := do.Invoke[*alpaca.MarketClient](i)
-		if err != nil {
-			return nil, err
-		}
-
-		return alpaca.NewTradingClient(cfg.Alpaca.APIKey, cfg.Alpaca.Secret, cfg.Alpaca.TradingURL, marketClient)
+		return exchangealpaca.New(
+			cfg.Alpaca.APIKey,
+			cfg.Alpaca.Secret,
+			cfg.Alpaca.TradingURL,
+			cfg.Alpaca.MarketURL,
+		), nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*marketservice.Service, error) {
-		client, err := do.Invoke[*alpaca.MarketClient](i)
+		client, err := do.Invoke[*exchangealpaca.Service](i)
 		if err != nil {
 			return nil, err
 		}
@@ -113,31 +107,33 @@ func provide() (do.Injector, error) {
 	})
 
 	do.Provide(injector, func(i do.Injector) (*portfolioService.Service, error) {
-		exchange, err := do.Invoke[*alpaca.TradingClient](i)
+		exchange, err := do.Invoke[*exchangealpaca.Service](i)
 		if err != nil {
 			return nil, err
 		}
 
-		portfolioRepo, err := do.Invoke[*portfolioRepo.Repository](i)
+		repo, err := do.Invoke[*portfolioRepo.Repository](i)
 		if err != nil {
 			return nil, err
 		}
 
-		market, err := do.Invoke[*alpaca.MarketClient](i)
+		analytics, err := do.Invoke[*analyticsService.Service](i)
 		if err != nil {
 			return nil, err
 		}
 
-		return portfolioService.New(exchange, portfolioRepo, market), nil
+		return portfolioService.New(exchange, repo, analytics, repo), nil
 	})
 
 	return injector, nil
 }
 
 func terminate(injector do.Injector) error {
-	db, err := do.Invoke[*sqlx.DB](injector)
+	db, err := do.Invoke[*gorm.DB](injector)
 	if err == nil && db != nil {
-		_ = db.Close()
+		if sqlDB, err := db.DB(); err == nil && sqlDB != nil {
+			_ = sqlDB.Close()
+		}
 	}
 
 	return nil

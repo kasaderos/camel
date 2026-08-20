@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/kasaderos/camel/internal/model"
-	"github.com/kasaderos/camel/pkg/alpaca"
 )
 
 type MarketProvider interface {
@@ -13,7 +12,7 @@ type MarketProvider interface {
 		ctx context.Context,
 		symbol string,
 		start, end time.Time,
-	) ([]alpaca.Bar, error)
+	) ([]model.Bar, error)
 }
 
 type Repository interface {

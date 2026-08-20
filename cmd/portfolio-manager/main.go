@@ -29,24 +29,24 @@ func main() {
 						Required: true,
 					},
 					&cli.Float64Flag{
-						Name:     "cash",
-						Usage:    "initial balance",
+						Name:     "cash-limit",
+						Usage:    "maximum cash limit",
 						Required: true,
 					},
 				},
 				Action: createPortfolio,
 			},
 			{
-				Name:  "info",
-				Usage: "Displaya portfolio info by agent id and print details",
+				Name:  "plan",
+				Usage: "Plan rebalance a portfolio by id",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "id",
-						Usage:    "Portfolio agent id",
+						Usage:    "Portfolio id",
 						Required: true,
 					},
 				},
-				Action: portfolioInfo,
+				Action: plan,
 			},
 			{
 				Name:  "rebalance",
@@ -61,18 +61,6 @@ func main() {
 				Action: rebalance,
 			},
 			{
-				Name:  "score",
-				Usage: "Prints the current score of portfolio by id",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "id",
-						Usage:    "Portfolio id",
-						Required: true,
-					},
-				},
-				Action: score,
-			},
-			{
 				Name:   "migrate-up",
 				Usage:  "Initialize database tables",
 				Flags:  []cli.Flag{},
@@ -83,6 +71,18 @@ func main() {
 				Usage:  "Remove everything in database",
 				Flags:  []cli.Flag{},
 				Action: migrateDrop,
+			},
+			{
+				Name:   "info",
+				Usage:  "Print portfolio info",
+				Flags:  []cli.Flag{},
+				Action: info,
+			},
+			{
+				Name:   "score",
+				Usage:  "Print portfolio score",
+				Flags:  []cli.Flag{},
+				Action: score,
 			},
 		},
 	}

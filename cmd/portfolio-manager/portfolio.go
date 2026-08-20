@@ -27,20 +27,25 @@ func createPortfolio(ctx context.Context, c *cli.Command) error {
 
 	csvName := c.String("csv")
 	portfolioID := c.String("id")
-	cash := c.Float64("cash")
+	cashLimit := c.Float64("cash-limit")
 
 	assets, err := readAssetsCSV(csvName)
 	if err != nil {
 		return err
 	}
 
-	slog.Info("create portfolio", "portfolioID", portfolioID, "cash", cash, "csv", csvName)
+	slog.Info("create portfolio", "portfolioID", portfolioID, "cashLimit", cashLimit, "csv", csvName)
+
+	stockIDs := make([]model.StockID, len(assets))
+	for i, asset := range assets {
+		stockIDs[i] = asset.ID
+	}
 
 	err = service.CreatePortfolio(
 		ctx,
 		portfolioID,
-		assets,
-		cash,
+		stockIDs,
+		cashLimit,
 	)
 	if err != nil {
 		return err
@@ -51,17 +56,12 @@ func createPortfolio(ctx context.Context, c *cli.Command) error {
 		return fmt.Errorf("fetch portfolio: %w", err)
 	}
 
-	err = service.Rebalance(ctx, portfolio)
-	if err != nil {
-		return fmt.Errorf("rebalance: %w", err)
-	}
-
 	portfolio.Print(c.Writer)
 
 	return nil
 }
 
-func portfolioInfo(ctx context.Context, c *cli.Command) error {
+func plan(ctx context.Context, c *cli.Command) error {
 	injector, err := provide()
 	if err != nil {
 		return err
@@ -70,12 +70,11 @@ func portfolioInfo(ctx context.Context, c *cli.Command) error {
 
 	service := do.MustInvoke[*portfolio.Service](injector)
 
-	portfolio, err := service.FetchPortfolio(ctx, c.String("id"))
-	if err != nil {
+	if err := service.CreateRebalanceTasks(ctx, c.String("id")); err != nil {
 		return err
 	}
 
-	portfolio.Print(c.Writer)
+	fmt.Fprintln(c.Writer, "plan OK")
 
 	return nil
 }
@@ -89,16 +88,7 @@ func rebalance(ctx context.Context, c *cli.Command) error {
 
 	service := do.MustInvoke[*portfolio.Service](injector)
 
-	portfolio, err := service.FetchPortfolio(ctx, c.String("id"))
-	if err != nil {
-		return fmt.Errorf("fetch portfolio: %w", err)
-	}
-
-	err = service.Rebalance(
-		ctx,
-		portfolio,
-	)
-	if err != nil {
+	if err := service.ProcessTasks(ctx, c.String("id")); err != nil {
 		return err
 	}
 
@@ -107,28 +97,7 @@ func rebalance(ctx context.Context, c *cli.Command) error {
 	return nil
 }
 
-func score(ctx context.Context, c *cli.Command) error {
-	injector, err := provide()
-	if err != nil {
-		return err
-	}
-	defer terminate(injector)
-
-	service := do.MustInvoke[*portfolio.Service](injector)
-
-	scores, err := service.FetchPortfolioScore(ctx, c.String("id"))
-	if err != nil {
-		return fmt.Errorf("fetch portfolio: %w", err)
-	}
-
-	for assetID, score := range scores {
-		fmt.Fprintf(c.Writer, "%s: %.2f\n", assetID, score)
-	}
-
-	return nil
-}
-
-func readAssetsCSV(path string) ([]model.Asset, error) {
+func readAssetsCSV(path string) ([]model.Stock, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("open csv: %w", err)
@@ -140,7 +109,7 @@ func readAssetsCSV(path string) ([]model.Asset, error) {
 
 	seen := map[string]struct{}{}
 
-	var out []model.Asset
+	var out []model.Stock
 
 	for {
 		rec, err := r.Read()
@@ -171,7 +140,7 @@ func readAssetsCSV(path string) ([]model.Asset, error) {
 		}
 
 		seen[id] = struct{}{}
-		out = append(out, model.Asset{ID: id})
+		out = append(out, model.Stock{ID: id})
 	}
 
 	if len(out) == 0 {
@@ -179,4 +148,44 @@ func readAssetsCSV(path string) ([]model.Asset, error) {
 	}
 
 	return out, nil
+}
+
+func info(ctx context.Context, c *cli.Command) error {
+	injector, err := provide()
+	if err != nil {
+		return err
+	}
+	defer terminate(injector)
+
+	service := do.MustInvoke[*portfolio.Service](injector)
+
+	portfolio, err := service.FetchPortfolio(ctx, c.String("id"))
+	if err != nil {
+		return fmt.Errorf("fetch portfolio: %w", err)
+	}
+
+	portfolio.Print(c.Writer)
+
+	return nil
+}
+
+func score(ctx context.Context, c *cli.Command) error {
+	injector, err := provide()
+	if err != nil {
+		return err
+	}
+	defer terminate(injector)
+
+	service := do.MustInvoke[*portfolio.Service](injector)
+
+	scores, err := service.FetchPortfolioScore(ctx, c.String("id"))
+	if err != nil {
+		return fmt.Errorf("fetch portfolio score: %w", err)
+	}
+
+	for stockID, score := range scores {
+		fmt.Fprintf(c.Writer, "%s: %f\n", stockID, score)
+	}
+
+	return nil
 }
