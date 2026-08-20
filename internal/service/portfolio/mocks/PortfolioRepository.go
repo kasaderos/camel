@@ -173,53 +173,6 @@ func (_c *PortfolioRepository_UpdatePortfolio_Call) RunAndReturn(run func(contex
 	return _c
 }
 
-// UpdatePortfolioStock provides a mock function with given fields: ctx, stock
-func (_m *PortfolioRepository) UpdatePortfolioStock(ctx context.Context, stock model.PortfolioStock) error {
-	ret := _m.Called(ctx, stock)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdatePortfolioStock")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.PortfolioStock) error); ok {
-		r0 = rf(ctx, stock)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// PortfolioRepository_UpdatePortfolioStock_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdatePortfolioStock'
-type PortfolioRepository_UpdatePortfolioStock_Call struct {
-	*mock.Call
-}
-
-// UpdatePortfolioStock is a helper method to define mock.On call
-//   - ctx context.Context
-//   - stock model.PortfolioStock
-func (_e *PortfolioRepository_Expecter) UpdatePortfolioStock(ctx interface{}, stock interface{}) *PortfolioRepository_UpdatePortfolioStock_Call {
-	return &PortfolioRepository_UpdatePortfolioStock_Call{Call: _e.mock.On("UpdatePortfolioStock", ctx, stock)}
-}
-
-func (_c *PortfolioRepository_UpdatePortfolioStock_Call) Run(run func(ctx context.Context, stock model.PortfolioStock)) *PortfolioRepository_UpdatePortfolioStock_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(model.PortfolioStock))
-	})
-	return _c
-}
-
-func (_c *PortfolioRepository_UpdatePortfolioStock_Call) Return(_a0 error) *PortfolioRepository_UpdatePortfolioStock_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *PortfolioRepository_UpdatePortfolioStock_Call) RunAndReturn(run func(context.Context, model.PortfolioStock) error) *PortfolioRepository_UpdatePortfolioStock_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // NewPortfolioRepository creates a new instance of PortfolioRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewPortfolioRepository(t interface {
