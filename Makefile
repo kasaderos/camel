@@ -29,4 +29,5 @@ migrate-up:
 docker-image:
 	docker build --platform linux/amd64 -t kasaderos99/camel:v1 .
 
-# docker exec -it eae31436815c psql -U camel -d camel
+docker-push:
+	docker push kasaderos99/camel:v1
