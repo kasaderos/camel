@@ -15,4 +15,10 @@ packages:
       PortfolioRepository:
       TaskRepository:
       AnalyticsService:
+  github.com/kasaderos/camel/internal/service/market:
+    config:
+      dir: "internal/service/market/mocks"
+    interfaces:
+      MarketProvider:
+      Repository:
 

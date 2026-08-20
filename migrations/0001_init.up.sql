@@ -53,6 +53,7 @@ CREATE TABLE asset_bars (
     high        DOUBLE PRECISION NOT NULL,
     low         DOUBLE PRECISION NOT NULL,
     close       DOUBLE PRECISION NOT NULL,
+    volume      BIGINT NOT NULL DEFAULT 0,
 
     PRIMARY KEY (asset_id, date)
 );
