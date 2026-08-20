@@ -27,14 +27,14 @@ func createPortfolio(ctx context.Context, c *cli.Command) error {
 
 	csvName := c.String("csv")
 	portfolioID := c.String("id")
-	cashLimit := c.Float64("cash-limit")
+	cash := c.Float64("cash")
 
 	assets, err := readAssetsCSV(csvName)
 	if err != nil {
 		return err
 	}
 
-	slog.Info("create portfolio", "portfolioID", portfolioID, "cashLimit", cashLimit, "csv", csvName)
+	slog.Info("create portfolio", "portfolioID", portfolioID, "cash", cash, "csv", csvName)
 
 	stockIDs := make([]model.StockID, len(assets))
 	for i, asset := range assets {
@@ -45,7 +45,7 @@ func createPortfolio(ctx context.Context, c *cli.Command) error {
 		ctx,
 		portfolioID,
 		stockIDs,
-		cashLimit,
+		cash,
 	)
 	if err != nil {
 		return err
@@ -170,6 +170,8 @@ func info(ctx context.Context, c *cli.Command) error {
 }
 
 func score(ctx context.Context, c *cli.Command) error {
+	const threshold = 0.01
+
 	injector, err := provide()
 	if err != nil {
 		return err
@@ -183,8 +185,12 @@ func score(ctx context.Context, c *cli.Command) error {
 		return fmt.Errorf("fetch portfolio score: %w", err)
 	}
 
+	fmt.Fprintf(c.Writer, "threshold: %f\n", threshold)
+
 	for stockID, score := range scores {
-		fmt.Fprintf(c.Writer, "%s: %f\n", stockID, score)
+		if score > threshold {
+			fmt.Fprintf(c.Writer, "%s: %f\n", stockID, score)
+		}
 	}
 
 	return nil

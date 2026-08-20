@@ -11,9 +11,7 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   portfolio-manager:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${CAMEL_IMAGE:-camel:local}
     depends_on:
       - postgres
     environment:

@@ -106,6 +106,15 @@ func provide() (do.Injector, error) {
 		return marketservice.New(client, repo), nil
 	})
 
+	do.Provide(injector, func(i do.Injector) (*analyticsService.Service, error) {
+		market, err := do.Invoke[*marketservice.Service](i)
+		if err != nil {
+			return nil, err
+		}
+
+		return analyticsService.NewService(market), nil
+	})
+
 	do.Provide(injector, func(i do.Injector) (*portfolioService.Service, error) {
 		exchange, err := do.Invoke[*exchangealpaca.Service](i)
 		if err != nil {

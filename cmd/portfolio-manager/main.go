@@ -29,8 +29,8 @@ func main() {
 						Required: true,
 					},
 					&cli.Float64Flag{
-						Name:     "cash-limit",
-						Usage:    "maximum cash limit",
+						Name:     "cash",
+						Usage:    "initial cash",
 						Required: true,
 					},
 				},
@@ -73,15 +73,27 @@ func main() {
 				Action: migrateDrop,
 			},
 			{
-				Name:   "info",
-				Usage:  "Print portfolio info",
-				Flags:  []cli.Flag{},
+				Name:  "info",
+				Usage: "Print portfolio info",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "id",
+						Usage:    "Portfolio id",
+						Required: true,
+					},
+				},
 				Action: info,
 			},
 			{
-				Name:   "score",
-				Usage:  "Print portfolio score",
-				Flags:  []cli.Flag{},
+				Name:  "score",
+				Usage: "Print portfolio score",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "id",
+						Usage:    "Portfolio id",
+						Required: true,
+					},
+				},
 				Action: score,
 			},
 		},
