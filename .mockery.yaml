@@ -7,9 +7,12 @@ filename: "{{.InterfaceName}}.go"
 mockname: "{{.InterfaceName}}"
 outpkg: "mocks"
 packages:
-  github.com/kasaderos/camel/internal/agents/portfolio:
+  github.com/kasaderos/camel/internal/service/portfolio:
+    config:
+      dir: "internal/service/portfolio/mocks"
     interfaces:
-      AgentRepository:
       Exchanger:
-      MarketService:
+      PortfolioRepository:
+      TaskRepository:
+      AnalyticsService:
 
