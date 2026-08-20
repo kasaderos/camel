@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/kasaderos/camel/internal/model"
 	"github.com/kasaderos/camel/internal/service/portfolio"
@@ -70,7 +71,7 @@ func plan(ctx context.Context, c *cli.Command) error {
 
 	service := do.MustInvoke[*portfolio.Service](injector)
 
-	if err := service.CreateRebalanceTasks(ctx, c.String("id")); err != nil {
+	if err := service.PlanRebalance(ctx, c.String("id")); err != nil {
 		return err
 	}
 
@@ -191,6 +192,36 @@ func score(ctx context.Context, c *cli.Command) error {
 		if score > threshold {
 			fmt.Fprintf(c.Writer, "%s: %f\n", stockID, score)
 		}
+	}
+
+	return nil
+}
+
+func listTasks(ctx context.Context, c *cli.Command) error {
+	injector, err := provide()
+	if err != nil {
+		return err
+	}
+	defer terminate(injector)
+
+	service := do.MustInvoke[*portfolio.Service](injector)
+
+	tasks, err := service.FetchRebalanceTasks(ctx, c.String("id"))
+	if err != nil {
+		return fmt.Errorf("fetch tasks: %w", err)
+	}
+
+	for _, task := range tasks {
+		fmt.Fprintf(
+			c.Writer, "%d:\n  stock: %s\n  side: %s\n  quantity: %f\n  status: %s\n  error: %s\n  created: %s\n",
+			task.ID,
+			task.StockID,
+			task.Side,
+			task.Quantity,
+			task.Status,
+			task.ErrorMessage,
+			task.CreatedAt.Format(time.RFC3339),
+		)
 	}
 
 	return nil

@@ -9,7 +9,7 @@ import (
 
 func (s *TestSuite) TestSendOrder() {
 	task := model.Task{
-		ID:       "task-1",
+		ID: 1,
 		StockID:  "AAPL",
 		Quantity: 2.0,
 		Side:     model.OrderSideBuy,
@@ -30,7 +30,7 @@ func (s *TestSuite) TestSendOrder() {
 
 				taskRepo.EXPECT().
 					UpdateTask(s.ctx, model.UpdateTask{
-						ID:           "task-1",
+						ID: 1,
 						Quantity:     new(2.0),
 						Status:       new(model.TaskStatusOrderFailed),
 						ErrorMessage: new("exchange down"),
@@ -55,7 +55,7 @@ func (s *TestSuite) TestSendOrder() {
 
 				taskRepo.EXPECT().
 					UpdateTask(s.ctx, model.UpdateTask{
-						ID:           "task-1",
+						ID: 1,
 						Order:        order,
 						Status:       new(model.TaskStatusOrderFailed),
 						ErrorMessage: new("order quantity mismatch: 3.000000 != 2.000000"),
@@ -80,7 +80,7 @@ func (s *TestSuite) TestSendOrder() {
 
 				taskRepo.EXPECT().
 					UpdateTask(s.ctx, model.UpdateTask{
-						ID:     "task-1",
+						ID: 1,
 						Status: new(model.TaskStatusOrderSent),
 						Order:  order,
 					}).
@@ -120,7 +120,7 @@ func (s *TestSuite) TestCheckOrderFill() {
 		{
 			name: "returns error when order is nil",
 			task: model.Task{
-				ID:     "task-1",
+				ID: 1,
 				Status: model.TaskStatusOrderSent,
 			},
 			setup:   func(*mocks.Exchanger, *mocks.TaskRepository) {},
@@ -129,7 +129,7 @@ func (s *TestSuite) TestCheckOrderFill() {
 		{
 			name: "returns error when fetch order fails",
 			task: model.Task{
-				ID:       "task-1",
+				ID: 1,
 				StockID:  "AAPL",
 				Quantity: 2.0,
 				Side:     model.OrderSideBuy,
@@ -152,7 +152,7 @@ func (s *TestSuite) TestCheckOrderFill() {
 		{
 			name: "does nothing when order is not filled",
 			task: model.Task{
-				ID:       "task-1",
+				ID: 1,
 				StockID:  "AAPL",
 				Quantity: 2.0,
 				Side:     model.OrderSideBuy,
@@ -180,7 +180,7 @@ func (s *TestSuite) TestCheckOrderFill() {
 		{
 			name: "marks task order filled when order is filled",
 			task: model.Task{
-				ID:       "task-1",
+				ID: 1,
 				StockID:  "AAPL",
 				Quantity: 2.0,
 				Side:     model.OrderSideBuy,
@@ -208,7 +208,7 @@ func (s *TestSuite) TestCheckOrderFill() {
 
 				taskRepo.EXPECT().
 					UpdateTask(s.ctx, model.UpdateTask{
-						ID:     "task-1",
+						ID: 1,
 						Status: new(model.TaskStatusOrderFilled),
 						Order:  order,
 					}).
@@ -248,7 +248,7 @@ func (s *TestSuite) TestCompleteTask() {
 		{
 			name: "returns error when order is nil",
 			task: model.Task{
-				ID:     "task-1",
+				ID: 1,
 				Status: model.TaskStatusOrderFilled,
 			},
 			setup: func(repo *mocks.PortfolioRepository, taskRepo *mocks.TaskRepository) {
@@ -267,7 +267,7 @@ func (s *TestSuite) TestCompleteTask() {
 		{
 			name: "returns error when stock is not in portfolio",
 			task: model.Task{
-				ID:     "task-1",
+				ID: 1,
 				Status: model.TaskStatusOrderFilled,
 				Order: &model.Order{
 					ID:           "order-1",
@@ -294,7 +294,7 @@ func (s *TestSuite) TestCompleteTask() {
 		{
 			name: "applies buy order and marks task completed",
 			task: model.Task{
-				ID:     "task-1",
+				ID: 1,
 				Status: model.TaskStatusOrderFilled,
 				Order: &model.Order{
 					ID:           "order-1",
@@ -337,7 +337,7 @@ func (s *TestSuite) TestCompleteTask() {
 
 				taskRepo.EXPECT().
 					UpdateTask(s.ctx, model.UpdateTask{
-						ID:     "task-1",
+						ID: 1,
 						Status: new(model.TaskStatusCompleted),
 						Order:  order,
 					}).

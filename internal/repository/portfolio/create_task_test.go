@@ -16,7 +16,6 @@ func (s *RepositorySuite) TestCreateTask() {
 	s.Require().NoError(err)
 
 	task := model.Task{
-		ID:          "task-1",
 		PortfolioID: portfolio.ID,
 		StockID:     "AAPL",
 		Side:        model.OrderSideBuy,
@@ -34,7 +33,7 @@ func (s *RepositorySuite) TestCreateTask() {
 	)
 	s.Require().NoError(err)
 	s.Require().Len(fetched, 1)
-	s.Equal(task.ID, fetched[0].ID)
+	s.Positive(fetched[0].ID)
 	s.Equal(task.PortfolioID, fetched[0].PortfolioID)
 	s.Equal(task.StockID, fetched[0].StockID)
 	s.Equal(task.Side, fetched[0].Side)
@@ -64,5 +63,5 @@ func (s *RepositorySuite) TestCreateTask_GeneratesID() {
 	fetched, err := s.repo.FetchTasks(ctx, "portfolio-1", nil)
 	s.Require().NoError(err)
 	s.Require().Len(fetched, 1)
-	s.NotEmpty(fetched[0].ID)
+	s.Positive(fetched[0].ID)
 }

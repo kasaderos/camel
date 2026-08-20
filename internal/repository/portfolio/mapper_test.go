@@ -32,7 +32,7 @@ func TestToModel(t *testing.T) {
 	emptyOrderID := ""
 
 	base := Task{
-		ID:           "task-1",
+		ID:           1,
 		PortfolioID:  "portfolio-1",
 		StockID:      "AAPL",
 		Quantity:     2.5,
@@ -52,7 +52,7 @@ func TestToModel(t *testing.T) {
 			name: "without order",
 			in:   base,
 			want: model.Task{
-				ID:           "task-1",
+				ID:           1,
 				PortfolioID:  "portfolio-1",
 				StockID:      "AAPL",
 				Side:         model.OrderSideBuy,
@@ -71,7 +71,7 @@ func TestToModel(t *testing.T) {
 				return t
 			}(),
 			want: model.Task{
-				ID:           "task-1",
+				ID:           1,
 				PortfolioID:  "portfolio-1",
 				StockID:      "AAPL",
 				Side:         model.OrderSideBuy,
@@ -92,7 +92,7 @@ func TestToModel(t *testing.T) {
 				return t
 			}(),
 			want: model.Task{
-				ID:           "task-1",
+				ID:           1,
 				PortfolioID:  "portfolio-1",
 				StockID:      "AAPL",
 				Side:         model.OrderSideBuy,
@@ -114,7 +114,7 @@ func TestToModel(t *testing.T) {
 				return t
 			}(),
 			want: model.Task{
-				ID:           "task-1",
+				ID:           1,
 				PortfolioID:  "portfolio-1",
 				StockID:      "AAPL",
 				Side:         model.OrderSideBuy,
@@ -147,7 +147,7 @@ func TestToModel(t *testing.T) {
 				return t
 			}(),
 			want: model.Task{
-				ID:           "task-1",
+				ID:           1,
 				PortfolioID:  "portfolio-1",
 				StockID:      "AAPL",
 				Side:         model.OrderSideBuy,

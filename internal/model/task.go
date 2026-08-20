@@ -17,7 +17,7 @@ const (
 )
 
 type Task struct {
-	ID          string
+	ID          int64
 	PortfolioID string
 	StockID     StockID
 	Side        OrderSide
@@ -33,7 +33,7 @@ type Task struct {
 }
 
 type UpdateTask struct {
-	ID           string
+	ID           int64
 	Quantity     *float64
 	Status       *TaskStatus
 	Order        *Order

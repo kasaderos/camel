@@ -22,7 +22,7 @@ CREATE TABLE portfolio_stocks (
 );
 
 CREATE TABLE rebalance_tasks (
-    id              TEXT PRIMARY KEY,
+    id              BIGSERIAL PRIMARY KEY,
     portfolio_id    TEXT NOT NULL,
     stock_id        TEXT NOT NULL,
     quantity        DOUBLE PRECISION NOT NULL,

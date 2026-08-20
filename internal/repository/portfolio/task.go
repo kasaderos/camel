@@ -3,7 +3,7 @@ package portfolio
 import "time"
 
 type Task struct {
-	ID          string  `gorm:"column:id;primaryKey"`
+	ID          int64   `gorm:"column:id;primaryKey;autoIncrement"`
 	PortfolioID string  `gorm:"column:portfolio_id"`
 	StockID     string  `gorm:"column:stock_id"`
 	Quantity    float64 `gorm:"column:quantity"`

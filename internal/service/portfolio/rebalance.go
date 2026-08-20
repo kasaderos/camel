@@ -3,21 +3,28 @@ package portfolio
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 
 	"github.com/kasaderos/camel/internal/model"
 )
 
-func (s *Service) Rebalance(
+func (s *Service) PlanRebalance(
 	ctx context.Context,
 	portfolioID string,
 ) error {
-	err := s.CheckUncompletedTasks(ctx, portfolioID)
+	slog.Info("plan rebalance", "portfolioID", portfolioID)
+
+	tasks, err := s.FetchRebalanceTasks(ctx, portfolioID)
 	if err != nil {
-		return fmt.Errorf("check uncompleted tasks: %w", err)
+		return fmt.Errorf("fetch rebalance tasks: %w", err)
 	}
 
-	err = s.CreateRebalanceTasks(ctx, portfolioID)
+	if len(tasks) > 0 {
+		return fmt.Errorf("some tasks are not completed: %v", len(tasks))
+	}
+
+	err = s.createRebalanceTasks(ctx, portfolioID)
 	if err != nil {
 		return fmt.Errorf("create rebalance tasks: %w", err)
 	}
@@ -25,10 +32,10 @@ func (s *Service) Rebalance(
 	return nil
 }
 
-func (s *Service) CheckUncompletedTasks(
+func (s *Service) FetchRebalanceTasks(
 	ctx context.Context,
 	portfolioID string,
-) error {
+) ([]model.Task, error) {
 	tasks, err := s.taskRepo.FetchTasks(
 		ctx,
 		portfolioID,
@@ -39,17 +46,13 @@ func (s *Service) CheckUncompletedTasks(
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("fetch tasks: %w", err)
+		return nil, fmt.Errorf("fetch tasks: %w", err)
 	}
 
-	if len(tasks) > 0 {
-		return fmt.Errorf("some tasks are not completed: %v", tasks)
-	}
-
-	return nil
+	return tasks, nil
 }
 
-func (s *Service) CreateRebalanceTasks(
+func (s *Service) createRebalanceTasks(
 	ctx context.Context,
 	portfolioID string,
 ) error {
@@ -87,11 +90,15 @@ func (s *Service) CreateRebalanceTasks(
 		return fmt.Errorf("prepare tasks: %w", err)
 	}
 
+	slog.Info("prepare tasks", "count", len(tasks))
+
 	for _, task := range tasks {
 		err = s.taskRepo.CreateTask(ctx, *task)
 		if err != nil {
 			return fmt.Errorf("create task: %w", err)
 		}
+
+		slog.Info("created task", "task", task)
 	}
 
 	err = s.UpdatePortfolio(ctx, portfolio)

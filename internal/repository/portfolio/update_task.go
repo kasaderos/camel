@@ -12,7 +12,7 @@ func (r *Repository) UpdateTask(
 	ctx context.Context,
 	task model.UpdateTask,
 ) error {
-	if task.ID == "" {
+	if task.ID == 0 {
 		return fmt.Errorf("task id is required")
 	}
 

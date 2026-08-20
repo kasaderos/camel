@@ -20,6 +20,9 @@ portfolio-plan:
 portfolio-rebalance:
 	docker compose run --rm portfolio-manager rebalance --id portfolio3
 
+portfolio-tasks:
+	docker compose run --rm portfolio-manager tasks --id portfolio3
+
 migrate-drop:
 	docker compose run --rm portfolio-manager migrate-drop
 

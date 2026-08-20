@@ -12,7 +12,6 @@ func (s *RepositorySuite) TestFetchTasks_FiltersByStatus() {
 	s.Require().NoError(err)
 
 	err = s.repo.CreateTask(ctx, model.Task{
-		ID:          "task-created",
 		PortfolioID: "portfolio-1",
 		StockID:     "AAPL",
 		Side:        model.OrderSideBuy,
@@ -22,7 +21,6 @@ func (s *RepositorySuite) TestFetchTasks_FiltersByStatus() {
 	s.Require().NoError(err)
 
 	err = s.repo.CreateTask(ctx, model.Task{
-		ID:          "task-completed",
 		PortfolioID: "portfolio-1",
 		StockID:     "MSFT",
 		Side:        model.OrderSideSell,
@@ -38,7 +36,16 @@ func (s *RepositorySuite) TestFetchTasks_FiltersByStatus() {
 	)
 	s.Require().NoError(err)
 	s.Require().Len(fetched, 1)
-	s.Equal("task-created", fetched[0].ID)
+	s.Equal("AAPL", string(fetched[0].StockID))
+	s.Equal(model.TaskStatusCreated, fetched[0].Status)
+
+	fetched, err = s.repo.FetchTasks(
+		ctx,
+		"portfolio-1",
+		[]model.TaskStatus{model.TaskStatusCreated, model.TaskStatusCompleted},
+	)
+	s.Require().NoError(err)
+	s.Require().Len(fetched, 2)
 
 	fetched, err = s.repo.FetchTasks(ctx, "portfolio-1", nil)
 	s.Require().NoError(err)

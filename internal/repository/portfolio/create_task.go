@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/kasaderos/camel/internal/model"
 )
 
@@ -20,13 +19,8 @@ func (r *Repository) CreateTask(
 		return fmt.Errorf("stock id is required")
 	}
 
-	if task.ID == "" {
-		task.ID = uuid.NewString()
-	}
-
 	now := time.Now().UTC()
 	row := Task{
-		ID:           task.ID,
 		PortfolioID:  task.PortfolioID,
 		StockID:      task.StockID,
 		Quantity:     task.Quantity,
@@ -35,6 +29,9 @@ func (r *Repository) CreateTask(
 		ErrorMessage: task.ErrorMessage,
 		CreatedAt:    now,
 		UpdatedAt:    now,
+	}
+	if task.ID != 0 {
+		row.ID = task.ID
 	}
 
 	if task.Order != nil {

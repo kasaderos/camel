@@ -18,21 +18,24 @@ func (s *RepositorySuite) TestUpdateTask() {
 	})
 	s.Require().NoError(err)
 
-	task := model.Task{
-		ID:          "task-1",
+	err = s.repo.CreateTask(ctx, model.Task{
 		PortfolioID: "portfolio-1",
 		StockID:     "AAPL",
 		Side:        model.OrderSideBuy,
 		Quantity:    5,
 		Status:      model.TaskStatusCreated,
-	}
-	err = s.repo.CreateTask(ctx, task)
+	})
 	s.Require().NoError(err)
+
+	created, err := s.repo.FetchTasks(ctx, "portfolio-1", []model.TaskStatus{model.TaskStatusCreated})
+	s.Require().NoError(err)
+	s.Require().Len(created, 1)
+	taskID := created[0].ID
 
 	createdAt := time.Date(2026, 8, 21, 10, 0, 0, 0, time.UTC)
 	status := model.TaskStatusOrderSent
 	err = s.repo.UpdateTask(ctx, model.UpdateTask{
-		ID:     task.ID,
+		ID:     taskID,
 		Status: &status,
 		Order: &model.Order{
 			ID:        "order-1",
@@ -59,7 +62,7 @@ func (s *RepositorySuite) TestUpdateTask() {
 	filledStatus := model.TaskStatusOrderFilled
 	filledAt := createdAt.Add(time.Minute)
 	err = s.repo.UpdateTask(ctx, model.UpdateTask{
-		ID:     task.ID,
+		ID:     taskID,
 		Status: &filledStatus,
 		Order: &model.Order{
 			ID:           "order-1",
@@ -90,7 +93,7 @@ func (s *RepositorySuite) TestUpdateTask() {
 	failedStatus := model.TaskStatusOrderFailed
 	errMsg := "rejected"
 	err = s.repo.UpdateTask(ctx, model.UpdateTask{
-		ID:           task.ID,
+		ID:           taskID,
 		Status:       &failedStatus,
 		ErrorMessage: &errMsg,
 	})

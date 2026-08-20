@@ -96,6 +96,18 @@ func main() {
 				},
 				Action: score,
 			},
+			{
+				Name:  "tasks",
+				Usage: "Print portfolio tasks",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "id",
+						Usage:    "Portfolio id",
+						Required: true,
+					},
+				},
+				Action: listTasks,
+			},
 		},
 	}
 
