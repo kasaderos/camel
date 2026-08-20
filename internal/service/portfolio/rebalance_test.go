@@ -10,6 +10,7 @@ import (
 
 func (s *TestSuite) TestBuildTask() {
 	const stockID model.StockID = "AAPL"
+	const portfolioID = "portfolio-1"
 
 	tests := []struct {
 		name      string
@@ -87,12 +88,12 @@ func (s *TestSuite) TestBuildTask() {
 			name: "sell all when target is zero",
 			stock: model.PortfolioStock{
 				StockID:  stockID,
-				Quantity: 2.5,
+				Quantity: 2,
 			},
 			targetSum: 0,
 			price:     100,
 			wantSide:  model.OrderSideSell,
-			wantQty:   2.5,
+			wantQty:   2,
 		},
 		{
 			name: "skip sell all when target is zero and quantity is zero",
@@ -108,13 +109,14 @@ func (s *TestSuite) TestBuildTask() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got := buildTask(tt.stock, tt.targetSum, tt.price)
+			got := buildTask(portfolioID, tt.stock, tt.targetSum, tt.price)
 			if tt.wantNil {
 				s.Nil(got)
 				return
 			}
 
 			s.Require().NotNil(got)
+			s.Equal(portfolioID, got.PortfolioID)
 			s.Equal(tt.stock.StockID, got.StockID)
 			s.Equal(tt.wantSide, got.Side)
 			s.InDelta(tt.wantQty, got.Quantity, 1e-9)
@@ -239,7 +241,7 @@ func (s *TestSuite) TestPrepareTasks() {
 			portfolio: model.Portfolio{
 				Cost: 1000,
 				Stocks: []model.PortfolioStock{
-					{StockID: "AAPL", Quantity: 2.5},
+					{StockID: "AAPL", Quantity: 2},
 				},
 			},
 			currentPrices: map[model.StockID]float64{"AAPL": 100},
@@ -248,7 +250,7 @@ func (s *TestSuite) TestPrepareTasks() {
 				{
 					StockID:  "AAPL",
 					Side:     model.OrderSideSell,
-					Quantity: 2.5,
+					Quantity: 2,
 					Status:   model.TaskStatusCreated,
 				},
 			},

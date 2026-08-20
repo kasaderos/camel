@@ -88,7 +88,6 @@ func (s *Service) CreateRebalanceTasks(
 	}
 
 	for _, task := range tasks {
-		task.PortfolioID = portfolioID
 		err = s.taskRepo.CreateTask(ctx, *task)
 		if err != nil {
 			return fmt.Errorf("create task: %w", err)
@@ -121,6 +120,7 @@ func (s *Service) FetchPortfolioScore(
 }
 
 func buildTask(
+	portfolioID string,
 	stock model.PortfolioStock,
 	targetSum float64,
 	price float64,
@@ -128,10 +128,11 @@ func buildTask(
 	if targetSum == 0 && stock.Quantity > 0 {
 		// sell all
 		return &model.Task{
-			StockID:  stock.StockID,
-			Side:     model.OrderSideSell,
-			Quantity: stock.Quantity,
-			Status:   model.TaskStatusCreated,
+			PortfolioID: portfolioID,
+			StockID:     stock.StockID,
+			Side:        model.OrderSideSell,
+			Quantity:    math.Floor(stock.Quantity),
+			Status:      model.TaskStatusCreated,
 		}
 	}
 
@@ -153,10 +154,11 @@ func buildTask(
 	}
 
 	return &model.Task{
-		StockID:  stock.StockID,
-		Side:     side,
-		Quantity: qty,
-		Status:   model.TaskStatusCreated,
+		PortfolioID: portfolioID,
+		StockID:     stock.StockID,
+		Side:        side,
+		Quantity:    math.Floor(qty),
+		Status:      model.TaskStatusCreated,
 	}
 }
 
@@ -232,7 +234,7 @@ func prepareTasks(
 
 		targetSum := targetWeight * portfolio.Cost
 
-		task := buildTask(stock, targetSum, price)
+		task := buildTask(portfolio.ID, stock, targetSum, price)
 
 		if task != nil {
 			tasks = append(tasks, task)
