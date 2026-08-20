@@ -33,7 +33,7 @@ docker-image-local:
 	docker build -t camel:local .
 
 docker-image:
-	docker build --platform linux/amd64 -t kasaderos99/camel:v1 .
+	docker build --platform linux/amd64 -t kasaderos99/camel:v2 .
 
 docker-push:
-	docker push kasaderos99/camel:v1
+	docker push kasaderos99/camel:v2

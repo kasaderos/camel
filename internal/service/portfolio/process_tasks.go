@@ -64,7 +64,7 @@ func (s *Service) processTask(
 	task model.Task,
 ) error {
 	switch task.Status {
-	case model.TaskStatusCreated, model.TaskStatusOrderFailed:
+	case model.TaskStatusCreated:
 		return s.sendOrder(ctx, &task)
 
 	case model.TaskStatusOrderSent:
@@ -129,6 +129,14 @@ func (s *Service) checkOrderFill(ctx context.Context, task *model.Task) error {
 	}
 
 	if order.Status != model.OrderStatusFilled {
+		if order.Status == model.OrderStatusCancelled {
+			return s.taskRepo.UpdateTask(ctx, model.UpdateTask{
+				ID:           task.ID,
+				Status:       new(model.TaskStatusOrderFailed),
+				ErrorMessage: new("order cancelled by user"),
+			})
+		}
+
 		slog.Info("order not yet filled",
 			"orderID", task.Order.ID,
 			"status", order.Status,
